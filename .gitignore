@@ -1,0 +1,9 @@
+*.txt
+*.exe
+.idea
+.vscode
+.env
+volumes/
+*.log
+*.mp4
+*.jpg

@@ -1,0 +1,40 @@
+services:
+  app:
+    container_name: grabber-app_brazil
+    build: ./
+    restart: unless-stopped
+    ports:
+      - 4001:4001
+    environment:
+      BOT_PREFIX: _brazil
+      TG_ENDPOINT: https://api.telegram.org/bot%s/%s
+      APP_PORT: 4001
+      PG_USER: postgres
+      PG_PASSWORD: secret
+      PG_DATABASE: grabber
+      PG_HOST: grab_db_brazil
+      PG_PORT: 5432
+    volumes:
+      - ./volumes/logs:/app/logs
+      - ./volumes/files:/app/files
+    networks:
+      - malone_4
+
+  db:
+    container_name: grab_db_brazil
+    image: postgres:15-alpine
+    ports:
+      - "5435:5432"
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: grabber
+    networks:
+      - malone_4
+    volumes:
+      - ./volumes/db/data:/var/lib/postgresql/data
+
+networks:
+  malone_4:
+    external: true
