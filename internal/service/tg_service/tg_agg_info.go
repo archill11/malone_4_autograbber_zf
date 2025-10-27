@@ -24,7 +24,7 @@ func (srv *TgService) showBotsAndChannels(chatId int) error {
 		mess.WriteString(fmt.Sprintf("	user: %s\n", fmt.Sprintf("%d | %s", b.UserCreator, srv.AddAt(user.Username))))
 		mess.WriteString(fmt.Sprintf("	личка: %s\n", b.Lichka))
 
-		if i%20 == 0 && i > 0 {
+		if i%15 == 0 && i > 0 {
 			err = srv.SendMessage(chatId, mess.String())
 			if err != nil {
 				return err
@@ -67,7 +67,7 @@ func (srv *TgService) showBotsAndChannels_user(chatId int) error {
 		mess.WriteString(fmt.Sprintf("\n	ch_link: %s\n", b.ChLink))
 		mess.WriteString(fmt.Sprintf("	личка: %s\n", b.Lichka))
 
-		if i%20 == 0 && i > 0 {
+		if i%15 == 0 && i > 0 {
 			err = srv.SendMessage(chatId, mess.String())
 			if err != nil {
 				return err
