@@ -22,7 +22,7 @@ services:
 
   db:
     container_name: grab_db_upravru2
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     ports:
       - "5451:5432"
     restart: unless-stopped
