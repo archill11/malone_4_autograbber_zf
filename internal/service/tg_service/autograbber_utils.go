@@ -64,6 +64,33 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 	cutEntities := false
 	for i, v := range entities {
 		// если fake-link
+		if strings.HasPrefix(v.Url, "https://t.me/lichka") || strings.HasPrefix(v.Url, "https://lichka") || strings.HasPrefix(v.Url, "https://fake-lichka") || strings.HasPrefix(v.Url, "https://t.me/fake-lichka") {
+			lichka := srv.DelAt(vampBot.Lichka)
+			urlLichka := fmt.Sprintf("https://t.me/%v", lichka)
+
+			newUrlResp, err := srv.CreateShortLink(urlLichka, urlLichka)
+			if err != nil || newUrlResp.Link == "" {
+				err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, urlLichka)
+				srv.l.Error(err.Error())
+
+				reportMess := bytes.Buffer{}
+				reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+				reportMess.WriteString(fmt.Sprintf("Ошибка при создании короткой уникальной ссылки\n\n"))
+				reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
+				reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
+				reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
+				gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
+				reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+				err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+				if err != nil {
+					srv.l.Error("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+				}
+			}
+			if newUrlResp.Link != "" {
+				urlLichka = newUrlResp.Link
+			}
+			entities[i].Url = urlLichka
+		}
 		if strings.HasPrefix(v.Url, "http://fake-link") || strings.HasPrefix(v.Url, "fake-link") || strings.HasPrefix(v.Url, "https://fake-link") {
 			groupLink, err := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 			if err != nil {
@@ -89,8 +116,8 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 			}
 			if srv.Cfg.IsShortLink == 1 {
 				newUrlResp, err := srv.CreateShortLink(refLink, refLink)
-				if err != nil {
-					err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, url: %v", err, refLink)
+				if err != nil || newUrlResp.Link == ""{
+					err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, refLink)
 					srv.l.Error(err.Error())
 
 					reportMess := bytes.Buffer{}
@@ -108,22 +135,6 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 				}
 				if newUrlResp.Link != "" {
 					refLink = newUrlResp.Link
-				} else {
-					err := fmt.Errorf("PrepareEntities CreateShortLink err: newUrlResp.Link is empty string, newUrlResp: %+v, url: %v", newUrlResp, refLink)
-					srv.l.Error(err.Error())
-
-					reportMess := bytes.Buffer{}
-					reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
-					reportMess.WriteString(fmt.Sprintf("Ошибка при создании короткой уникальной ссылки\n\n"))
-					reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
-					reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
-					reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
-					gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
-					reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
-					err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-					if err != nil {
-						srv.l.Error("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
-					}
 				}
 			}
 			entities[i].Url = refLink
