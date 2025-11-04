@@ -68,7 +68,9 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 			lichka := srv.DelAt(vampBot.Lichka)
 			urlLichka := fmt.Sprintf("https://t.me/%v", lichka)
 
+			
 			newUrlResp, err := srv.CreateShortLink(urlLichka, urlLichka)
+			srv.l.Warn("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
 			if err != nil || newUrlResp.Link == "" {
 				err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, urlLichka)
 				srv.l.Error(err.Error())
@@ -90,6 +92,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 				urlLichka = newUrlResp.Link
 			}
 			entities[i].Url = urlLichka
+			srv.l.Warn("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp), zap.Any("entities[i]", entities[i]), zap.Any("entities", entities))
 		}
 		if strings.HasPrefix(v.Url, "http://fake-link") || strings.HasPrefix(v.Url, "fake-link") || strings.HasPrefix(v.Url, "https://fake-link") {
 			groupLink, err := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
