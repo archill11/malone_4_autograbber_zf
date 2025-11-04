@@ -93,6 +93,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 			}
 			entities[i].Url = urlLichka
 			srv.l.Warn("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp), zap.Any("entities[i]", entities[i]), zap.Any("entities", entities))
+			continue
 		}
 		if strings.HasPrefix(v.Url, "http://fake-link") || strings.HasPrefix(v.Url, "fake-link") || strings.HasPrefix(v.Url, "https://fake-link") {
 			groupLink, err := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
