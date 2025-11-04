@@ -159,7 +159,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 	if lichka != "" {
 		messText = strings.Replace(messText, "@lichka", lichka, -1)
 	}
-	srv.l.Info("PrepareEntities Replace 2 @lichka", zap.Any("lichka", lichka), zap.Any("new messText", messText), zap.Any("vampBot", vampBot))
+	srv.l.Info("PrepareEntities Replace 2 @lichka", zap.Any("lichka", lichka), zap.Any("new messText", messText), zap.Any("vampBot", vampBot), zap.Any("entities", entities))
 	if !cutEntities {
 		return entities, messText, nil
 	}
