@@ -26,6 +26,9 @@ var group_link_schema string
 //go:embed schemes/cfg.sql
 var cfg_schema string
 
+//go:embed schemes/tg_error.sql
+var tg_error string
+
 type (
 	DBConfig struct {
 		User     string
@@ -58,6 +61,7 @@ func New(config DBConfig, l *zap.Logger) (*Database, error) {
 		users_schema,
 		group_link_schema,
 		cfg_schema,
+		tg_error,
 	}
 	for _, v := range queries {
 		if _, err := db.Exec(context.Background(), v); err != nil {

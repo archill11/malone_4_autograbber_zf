@@ -70,7 +70,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 
 			
 			newUrlResp, err := srv.CreateShortLink(urlLichka, urlLichka)
-			srv.l.Warn("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
+			srv.l.Debug("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
 			if err != nil || newUrlResp.Link == "" {
 				err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, urlLichka)
 				srv.l.Error(err.Error())
@@ -83,16 +83,19 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 				reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
 				gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 				reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
-				err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-				if err != nil {
-					srv.l.Error("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+
+				if srv.Cfg.BotTokenForStat != "" {
+					err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+					if err != nil {
+						srv.l.Debug("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+					}
 				}
 			}
 			if newUrlResp.Link != "" {
 				urlLichka = newUrlResp.Link
 			}
 			entities[i].Url = urlLichka
-			srv.l.Warn("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp), zap.Any("entities[i]", entities[i]), zap.Any("entities", entities))
+			srv.l.Debug("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp), zap.Any("entities[i]", entities[i]), zap.Any("entities", entities))
 			continue
 		}
 		if strings.HasPrefix(v.Url, "http://fake-link") || strings.HasPrefix(v.Url, "fake-link") || strings.HasPrefix(v.Url, "https://fake-link") {
@@ -100,7 +103,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 			if err != nil {
 				return nil, messText, err
 			}
-			srv.l.Info("PrepareEntities:", zap.Any("vampBot", vampBot), zap.Any("groupLink", groupLink))
+			srv.l.Debug("PrepareEntities:", zap.Any("vampBot", vampBot), zap.Any("groupLink", groupLink))
 			if groupLink.Link == "" {
 				continue
 			}
@@ -132,9 +135,12 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 					reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
 					gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 					reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
-					err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-					if err != nil {
-						srv.l.Error("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+
+					if srv.Cfg.BotTokenForStat != "" {
+						err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+						if err != nil {
+							srv.l.Debug("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+						}
 					}
 				}
 				if newUrlResp.Link != "" {
@@ -152,14 +158,14 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 		if newUrl != "" {
 			entities[i].Url = newUrl
 		}
-		srv.l.Info("PrepareEntities", zap.Any("newUrl", newUrl), zap.Any("vampBot", vampBot))
+		srv.l.Debug("PrepareEntities", zap.Any("newUrl", newUrl), zap.Any("vampBot", vampBot))
 	}
 	lichka := srv.AddAt(vampBot.Lichka)
-	srv.l.Info("PrepareEntities Replace 1 @lichka", zap.Any("lichka", lichka), zap.Any("old messText", messText), zap.Any("vampBot", vampBot))
+	srv.l.Debug("PrepareEntities Replace 1 @lichka", zap.Any("lichka", lichka), zap.Any("old messText", messText), zap.Any("vampBot", vampBot))
 	if lichka != "" {
 		messText = strings.Replace(messText, "@lichka", lichka, -1)
 	}
-	srv.l.Info("PrepareEntities Replace 2 @lichka", zap.Any("lichka", lichka), zap.Any("new messText", messText), zap.Any("vampBot", vampBot), zap.Any("entities", entities))
+	srv.l.Debug("PrepareEntities Replace 2 @lichka", zap.Any("lichka", lichka), zap.Any("new messText", messText), zap.Any("vampBot", vampBot), zap.Any("entities", entities))
 	if !cutEntities {
 		return entities, messText, nil
 	}

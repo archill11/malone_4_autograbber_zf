@@ -10,3 +10,7 @@ CREATE TABLE IF NOT EXISTS cfg (
 INSERT INTO cfg (id, val)
   VALUES ('auto-acc-media-gr', '0')
 ON CONFLICT DO NOTHING;
+
+INSERT INTO cfg (id, val)
+  VALUES ('is-sending-now', '0')
+ON CONFLICT DO NOTHING;

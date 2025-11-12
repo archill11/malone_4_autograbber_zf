@@ -123,6 +123,11 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 		}
 	}
 
+	srv.db.EditCfgVal("is-sending-now", "1")
+	defer func() {
+		srv.db.EditCfgVal("is-sending-now", "0")
+	}()
+
 	for i, vampBot := range allVampBots {
 		botRefka := vampBot.GroupLinkId
 		if srv.Cfg.IsMultiGrabber == 1 && vampBot.DonorChId != 0 && vampBot.DonorChId != channel_id {
@@ -136,7 +141,15 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 			IsDisable++
 			continue
 		}
-		srv.l.Info("Donor_addChannelPost", zap.Any("bot index in arr", i), zap.Any("bot ch link", vampBot.ChLink))
+
+		srv.l.Info("______________________________________")
+		srv.l.Info(
+			"Donor_addChannelPost",
+			zap.Any("bot index in arr", i),
+			zap.Any("arr len", len(allVampBots)),
+			zap.Any("bot ch link", vampBot.ChLink),
+		)
+
 		err := srv.sendChPostAsVamp(vampBot, m)
 		if err != nil {
 			notOkSend++
@@ -677,6 +690,12 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 	if len(allVampBots) == 0 {
 		return fmt.Errorf("sendChPostAsVamp_Media_Group GetAllVampBots err: len(allVampBots) == 0")
 	}
+
+	s.db.EditCfgVal("is-sending-now", "1")
+	defer func() {
+		s.db.EditCfgVal("is-sending-now", "0")
+	}()
+
 	var okSend int
 	var notOkSend int
 	var IsDisable int
@@ -746,7 +765,7 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		sort.Slice(mediaArrCoppy, func(i, j int) (less bool) { //сортировка по MessageId
 			return mediaArrCoppy[i].MessageId < mediaArrCoppy[j].MessageId
 		})
-		s.l.Info(fmt.Sprintf("sendChPostAsVamp_Media_Group mediaArrCoppy: %+v", mediaArrCoppy))
+		s.l.Info("sendChPostAsVamp_Media_Group mediaArrCoppy:", zap.Any("mediaArrCoppy", mediaArrCoppy))
 		for _, med := range mediaArrCoppy {
 			nwmd := models.InputMedia{
 				Type:            med.Type_media,
@@ -759,7 +778,7 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 				arrsik = append(arrsik, nwmd)
 			}
 		}
-		s.l.Info(fmt.Sprintf("sendChPostAsVamp_Media_Group arrsik: %+v", arrsik))
+		s.l.Info("sendChPostAsVamp_Media_Group arrsik:", zap.Any("arrsik", arrsik))
 
 		mediaJson := map[string]any{
 			"chat_id": strconv.Itoa(vampBot.ChId),
