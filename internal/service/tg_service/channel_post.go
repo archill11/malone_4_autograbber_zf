@@ -200,6 +200,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	var reportMess2 bytes.Buffer
 	for key, val := range refkiMap {
 		grLinkName, _ := srv.db.GetGroupLinkById(key)
+
 		reportMess2.WriteString(fmt.Sprintf("Реф: %s\n", grLinkName.Title))
 		for k, v := range val {
 			reportMess2.WriteString(fmt.Sprintf("%s: %d\n", k, v))
@@ -316,6 +317,11 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 		return fmt.Errorf("sendChPostAsVamp Decode err: %v", err)
 	}
 	if cAny.ErrorCode != 0 {
+		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, cAny.BotErrResp.Description)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp AddNewTgError err", zap.Error(err))
+		}
+
 		reportMess := bytes.Buffer{}
 		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
 		reportMess.WriteString(fmt.Sprintf("Ошибка при отправки поста в канал\n\n"))
@@ -325,9 +331,9 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
 
-		err := srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+		err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
 		if err != nil {
-			srv.l.Error("sendChPostAsVamp SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+			srv.l.Warn("sendChPostAsVamp SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
 		}
 
 		if (srv.Cfg.BotPrefix == "_noviy" && vampBot.GroupLinkId == 2) || (srv.Cfg.BotPrefix == "_upravru2" && vampBot.GroupLinkId == 12) {
