@@ -187,3 +187,37 @@ func (srv *TgService) CreateShortLink(name, url string) (models.CreateShortLinkR
 	}
 	return j, nil
 }
+
+func (srv *TgService) CreateShortLinkWithWaiting(name, url string) (models.CreateShortLinkResp, error) {
+	newUrlResp, err := srv.CreateShortLink(name, url)
+	if err != nil || newUrlResp.Link == "" {
+		time.Sleep(time.Second*7)
+
+		newUrlResp, err := srv.CreateShortLink(name, url)
+		if err != nil || newUrlResp.Link == "" {
+			time.Sleep(time.Second*7)
+
+			newUrlResp, err := srv.CreateShortLink(name, url)
+			if err != nil || newUrlResp.Link == "" {
+				time.Sleep(time.Second*7)
+
+				newUrlResp, err := srv.CreateShortLink(name, url)
+				if err != nil || newUrlResp.Link == "" {
+					time.Sleep(time.Second*7)
+
+					newUrlResp, err := srv.CreateShortLink(name, url)
+					if err != nil || newUrlResp.Link == "" {
+						time.Sleep(time.Second*7)
+
+						newUrlResp, err := srv.CreateShortLink(name, url)
+						if err != nil || newUrlResp.Link == "" {
+							return newUrlResp, err
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return newUrlResp, nil
+}

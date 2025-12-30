@@ -68,34 +68,36 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 			lichka := srv.DelAt(vampBot.Lichka)
 			urlLichka := fmt.Sprintf("https://t.me/%v", lichka)
 
-			
-			newUrlResp, err := srv.CreateShortLink(urlLichka, urlLichka)
-			srv.l.Debug("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
-			if err != nil || newUrlResp.Link == "" {
-				err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, urlLichka)
-				srv.l.Error(err.Error())
-
-				reportMess := bytes.Buffer{}
-				reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
-				reportMess.WriteString(fmt.Sprintf("Ошибка при создании короткой уникальной ссылки\n\n"))
-				reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
-				reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
-				reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
-				gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
-				reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
-
-				if srv.Cfg.BotTokenForStat != "" {
-					err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-					if err != nil {
-						srv.l.Debug("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+			if srv.Cfg.IsShortLink == 1 {
+				newUrlResp, err := srv.CreateShortLinkWithWaiting(urlLichka, urlLichka)
+				srv.l.Debug("МЕТОД PrepareEntities go CreateShortLinkWithWaiting", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
+				if err != nil || newUrlResp.Link == "" {
+					err := fmt.Errorf("PrepareEntities CreateShortLinkWithWaiting err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, urlLichka)
+					srv.l.Error(err.Error())
+	
+					reportMess := bytes.Buffer{}
+					reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+					reportMess.WriteString(fmt.Sprintf("Ошибка при создании короткой уникальной ссылки\n\n"))
+					reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
+					reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
+					reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
+					gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
+					reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+	
+					if srv.Cfg.BotTokenForStat != "" {
+						err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+						if err != nil {
+							srv.l.Debug("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+						}
 					}
 				}
+				if newUrlResp.Link != "" {
+					urlLichka = newUrlResp.Link
+				}
+				srv.l.Debug("МЕТОД PrepareEntities go CreateShortLinkWithWaiting", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp), zap.Any("entities[i]", entities[i]), zap.Any("entities", entities))
 			}
-			if newUrlResp.Link != "" {
-				urlLichka = newUrlResp.Link
-			}
+
 			entities[i].Url = urlLichka
-			srv.l.Debug("МЕТОД PrepareEntities go CreateShortLink", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp), zap.Any("entities[i]", entities[i]), zap.Any("entities", entities))
 			continue
 		}
 		if strings.HasPrefix(v.Url, "http://fake-link") || strings.HasPrefix(v.Url, "fake-link") || strings.HasPrefix(v.Url, "https://fake-link") {
@@ -122,9 +124,9 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 				}
 			}
 			if srv.Cfg.IsShortLink == 1 {
-				newUrlResp, err := srv.CreateShortLink(refLink, refLink)
+				newUrlResp, err := srv.CreateShortLinkWithWaiting(refLink, refLink)
 				if err != nil || newUrlResp.Link == ""{
-					err := fmt.Errorf("PrepareEntities CreateShortLink err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, refLink)
+					err := fmt.Errorf("PrepareEntities CreateShortLinkWithWaiting err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, refLink)
 					srv.l.Error(err.Error())
 
 					reportMess := bytes.Buffer{}
