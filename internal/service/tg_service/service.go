@@ -43,6 +43,7 @@ type (
 		BotTokenForStat string
 		IsMultiGrabber  int
 		IsGptText  int
+		IsGptTextV2  int
 		IsShortLink  int
 		ShortLinkUrl  string
 		IsChangeMediaMetadata int

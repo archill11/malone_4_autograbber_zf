@@ -127,6 +127,9 @@ func (srv *TgService) TnInIntreval(tAfter, tBefore time.Time) bool {
 
 // заменяет символы в тексте
 func (srv *TgService) ReplaceRundomRuSymbols(mess string) string {
+	if srv.Cfg.IsGptTextV2 == 1 {
+		return srv.ReplaceRundomRuSymbolsV2(mess)
+	}
     if mess == "" {
         return ""
     }
@@ -148,6 +151,41 @@ func (srv *TgService) ReplaceRundomRuSymbols(mess string) string {
         cRu: cEn,
         yRu: yEn,
         eRu: eEn,
+    }
+    for ru, en := range ruEnMap {
+        ruCount := strings.Count(mess, ru)
+        mess = strings.Replace(mess, ru, en, randRange(0, ruCount+1))
+    }
+    return mess
+}
+
+// заменяет символы в тексте
+func (srv *TgService) ReplaceRundomRuSymbolsV2(mess string) string {
+    if mess == "" {
+        return ""
+    }
+    aRu, aEn := "а", "α"
+    tRu, tEn := "т", "τ"
+    eRu, eEn := "е", "℮"
+    oRu, oEn := "о", "o"
+    kRu, kEn := "к", "ҡ"
+    mRu, mEn := "м", "ʍ"
+    pRu, pEn := "р", "ρ"
+    cRu, cEn := "с", "c"
+    yRu, yEn := "у", "Ꭹ"
+    xRu, xEn := "х", "᙭"
+
+    ruEnMap := map[string]string{
+        aRu: aEn,
+        tRu: tEn,
+        eRu: eEn,
+        oRu: oEn,
+        kRu: kEn,
+        mRu: mEn,
+		pRu: pEn,
+        cRu: cEn,
+        yRu: yEn,
+        xRu: xEn,
     }
     for ru, en := range ruEnMap {
         ruCount := strings.Count(mess, ru)
