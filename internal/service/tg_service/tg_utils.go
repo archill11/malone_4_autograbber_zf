@@ -166,13 +166,15 @@ func (srv *TgService) ReplaceRundomRuSymbolsV2(mess string) string {
     }
     aRu, aEn := "а", "α"
     tRu, tEn := "т", "τ"
-    eRu, eEn := "е", "℮"
+	eRu, eEn := "е", "e"
+    // eRu, eEn := "е", "℮"
     oRu, oEn := "о", "o"
     kRu, kEn := "к", "ҡ"
     mRu, mEn := "м", "ʍ"
     pRu, pEn := "р", "ρ"
     cRu, cEn := "с", "c"
-    yRu, yEn := "у", "Ꭹ"
+    // yRu, yEn := "у", "Ꭹ"
+	yRu, yEn := "у", "y"
     xRu, xEn := "х", "᙭"
 
     ruEnMap := map[string]string{
