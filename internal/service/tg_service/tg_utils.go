@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func (srv *TgService) ChInfoToLinkHTML(link, title string) string {
@@ -261,4 +263,22 @@ func (srv *TgService) CreateShortLinkWithWaiting(name, url string) (models.Creat
 	}
 
 	return newUrlResp, nil
+}
+
+func (srv *TgService) ReplaceSymbolsOrApenAI(messText string) string {
+	if srv.Cfg.IsGptTextOpenAI == 1 {
+		gptMessText, err := srv.CreateGptTextOpenAI(messText)
+		if err != nil {
+			srv.l.Error("ReplaceSymbolsOrApenAI CreateGptTextOpenAI err", zap.Error(err))
+			messText = srv.ReplaceRundomRuSymbols(messText)
+		} else {
+			messText = gptMessText
+		}
+
+		return  messText
+	}
+
+	messText = srv.ReplaceRundomRuSymbols(messText)
+
+	return messText
 }

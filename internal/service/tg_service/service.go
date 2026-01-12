@@ -44,6 +44,8 @@ type (
 		IsMultiGrabber  int
 		IsGptText  int
 		IsGptTextV2  int
+		IsGptTextOpenAI  int
+		OpenAiAPIToken  string
 		IsShortLink  int
 		ShortLinkUrl  string
 		IsChangeMediaMetadata int

@@ -49,6 +49,8 @@ func Get() *Config {
 	c.Tg.IsMultiGrabber, _ = strconv.Atoi(os.Getenv("IS_MULTI_GRABBER")) // возможность привязывать одного граббера к разным каналам донорам
 	c.Tg.IsGptText, _ = strconv.Atoi(os.Getenv("IS_GPT_TEXT")) // создание уникальных текстов
 	c.Tg.IsGptTextV2, _ = strconv.Atoi(os.Getenv("IS_GPT_TEXT_V2")) // создание уникальных текстов v2
+	c.Tg.IsGptTextOpenAI, _ = strconv.Atoi(os.Getenv("IS_GPT_TEXT_OPENAI")) // создание уникальных текстов через openai API
+	c.Tg.OpenAiAPIToken = os.Getenv("OPENAI_API_TOKEN")
 	c.Tg.IsShortLink, _ = strconv.Atoi(os.Getenv("IS_CHORT_LINK")) // создание уникальных сокращенных ссылок
 	c.Tg.ShortLinkUrl  = os.Getenv("CHORT_LINK_URL") // url создание уникальных сокращенных ссылок
 	c.Tg.IsChangeMediaMetadata, _ = strconv.Atoi(os.Getenv("IS_CHANGE_MEDIA_METADATA")) // поменять метадату в медиафайлах
