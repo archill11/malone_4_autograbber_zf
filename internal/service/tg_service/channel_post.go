@@ -289,6 +289,12 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 		if srv.Cfg.IsGptText == 1 {
 			messText = srv.ReplaceSymbolsOrApenAI(messText)
 		}
+		_, newMessText, err := srv.PrepareEntities(nil, messText, vampBot)
+		if err != nil {
+			return fmt.Errorf("sendChPostAsVamp PrepareEntities 2 err: %v", err)
+		}
+		messText = newMessText
+		
 	}
 	futureMesJson["text"] = messText
 

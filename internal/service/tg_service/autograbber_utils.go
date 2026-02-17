@@ -61,7 +61,9 @@ func (srv *TgService) ChangeLinkReferredToPost(originalLink string, vampBot enti
 // и вырезает все ссылки и Entities если группа-ссылка - cut-link
 func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText string, vampBot entity.Bot) ([]models.MessageEntity, string, error) {
 	srv.l.Info("PrepareEntities", zap.Any("vampBot", vampBot))
+
 	cutEntities := false
+
 	for i, v := range entities {
 		// если fake-link
 		if strings.HasPrefix(v.Url, "https://t.me/lichka") || strings.HasPrefix(v.Url, "https://lichka") || strings.HasPrefix(v.Url, "https://fake-lichka") || strings.HasPrefix(v.Url, "https://t.me/fake-lichka") {
@@ -162,6 +164,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 		}
 		srv.l.Debug("PrepareEntities", zap.Any("newUrl", newUrl), zap.Any("vampBot", vampBot))
 	}
+
 	lichka := srv.AddAt(vampBot.Lichka)
 	srv.l.Debug("PrepareEntities Replace 1 @lichka", zap.Any("lichka", lichka), zap.Any("old messText", messText), zap.Any("vampBot", vampBot))
 	if lichka != "" {
