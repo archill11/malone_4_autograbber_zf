@@ -582,43 +582,36 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		if err != nil {
 			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo DownloadFile err: %v", err)
 		}
+	}
 
-		srv.l.Info(fmt.Sprintf(
-			"after DownloadFile postType: %v, IsChangeMediaMetadata: %v, IsUniqueImage: %v, IsUniqueVideo: %v",
-			postType,
-			srv.Cfg.IsChangeMediaMetadata,
-			srv.Cfg.IsUniqueImage,
-			srv.Cfg.IsUniqueVideo,
-		))
-
-		if srv.Cfg.IsChangeMediaMetadata == 1 {
-			srv.l.Info("call RandomizeMP4Metadata")
-			err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
-			if err != nil {
-				srv.l.Error("sendChPostAsVamp_Video_or_Photo RandomizeMP4Metadata err", zap.Error(err))
-			}
-		}
-
-		if postType == "photo" && srv.Cfg.IsUniqueImage == 1 {
-			srv.l.Info("call UniqueProcessImageFile")
-			err := UniqueProcessImageFile(fileNameInServer, fileNameInServerAugmented)
-			if err != nil {
-				srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessImageFile err", zap.Error(err))
-			} else {
-				fileNameInServer = fileNameInServerAugmented
-			}
-		}
-
-		if postType == "video" && srv.Cfg.IsUniqueVideo == 1 {
-			srv.l.Info("call UniqueProcessVideoFile")
-			err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, false)
-			if err != nil {
-				srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessVideoFile err", zap.Error(err))
-			} else {
-				fileNameInServer = fileNameInServerAugmented
-			}
+	if postType == "video" && srv.Cfg.IsChangeMediaMetadata == 1 {
+		srv.l.Info("call RandomizeMP4Metadata")
+		err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo RandomizeMP4Metadata err", zap.Error(err))
 		}
 	}
+
+	if postType == "photo" && srv.Cfg.IsUniqueImage == 1 {
+		srv.l.Info("call UniqueProcessImageFile")
+		err := UniqueProcessImageFile(fileNameInServer, fileNameInServerAugmented)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessImageFile err", zap.Error(err))
+		} else {
+			fileNameInServer = fileNameInServerAugmented
+		}
+	}
+
+	if postType == "video" && srv.Cfg.IsUniqueVideo == 1 {
+		srv.l.Info("call UniqueProcessVideoFile")
+		err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, false)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessVideoFile err", zap.Error(err))
+		} else {
+			fileNameInServer = fileNameInServerAugmented
+		}
+	}
+
 	futureVideoJson[postType] = fmt.Sprintf("@%s", fileNameInServer)
 
 	srv.l.Info("call fileNameInServerafter all", zap.Any("fileNameInServer", fileNameInServer))
