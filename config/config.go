@@ -54,6 +54,8 @@ func Get() *Config {
 	c.Tg.IsShortLink, _ = strconv.Atoi(os.Getenv("IS_CHORT_LINK")) // создание уникальных сокращенных ссылок
 	c.Tg.ShortLinkUrl  = os.Getenv("CHORT_LINK_URL") // url создание уникальных сокращенных ссылок
 	c.Tg.IsChangeMediaMetadata, _ = strconv.Atoi(os.Getenv("IS_CHANGE_MEDIA_METADATA")) // поменять метадату в медиафайлах
+	c.Tg.IsUniqueVideo, _ = strconv.Atoi(os.Getenv("IS_UNIQUE_VIDEO")) // уникальные видео через ffmpeg
+	c.Tg.IsUniqueImage, _ = strconv.Atoi(os.Getenv("IS_UNIQUE_IMAGE")) // уникальные картинки через imaging и gg
 
 
 	c.Server.Port = os.Getenv("APP_PORT")

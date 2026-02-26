@@ -49,6 +49,8 @@ type (
 		IsShortLink  int
 		ShortLinkUrl  string
 		IsChangeMediaMetadata int
+		IsUniqueVideo int
+		IsUniqueImage int
 	}
 
 	TgService struct {

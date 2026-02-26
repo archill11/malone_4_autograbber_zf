@@ -7,6 +7,7 @@ import (
 	pg "myapp/internal/repository/pg"
 	tg_service "myapp/internal/service/tg_service"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -34,6 +35,11 @@ func main() {
 		log.Fatal("can't init logger", err)
 	}
 	defer app.logger.Sync()
+
+	_, err = exec.LookPath("ffmpeg")
+	if err != nil {
+		log.Fatal("FFmpeg не найден в системе")
+	}
 
 	app.db, err = pg.New(app.config.Db, app.logger) // БД
 	if err != nil {
