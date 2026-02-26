@@ -566,7 +566,11 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	}
 	fileNameInServer := fmt.Sprintf("./files/%s.%s", getFileResp.Result.File_unique_id, fileType)
 	fileNameInServerAugmented := fmt.Sprintf("./files/%s_augmented.%s", getFileResp.Result.File_unique_id, fileType)
-	srv.l.Info(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: fileNameInServer: %s", fileNameInServer))
+	srv.l.Info(fmt.Sprintf(
+		"sendChPostAsVamp_Video_or_Photo: fileNameInServer: %s, fileNameInServerAugmented: %s",
+		fileNameInServer,
+		fileNameInServerAugmented,
+	))
 
 	_, err = os.Stat(fileNameInServer)
 	if errors.Is(err, os.ErrNotExist) {
@@ -579,7 +583,16 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo DownloadFile err: %v", err)
 		}
 
+		srv.l.Info(fmt.Sprintf(
+			"after DownloadFile postType: %v, IsChangeMediaMetadata: %v, IsUniqueImage: %v, IsUniqueVideo: %v",
+			postType,
+			srv.Cfg.IsChangeMediaMetadata,
+			srv.Cfg.IsUniqueImage,
+			srv.Cfg.IsUniqueVideo,
+		))
+
 		if srv.Cfg.IsChangeMediaMetadata == 1 {
+			srv.l.Info("call RandomizeMP4Metadata")
 			err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
 			if err != nil {
 				srv.l.Error("sendChPostAsVamp_Video_or_Photo RandomizeMP4Metadata err", zap.Error(err))
@@ -587,6 +600,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		}
 
 		if postType == "photo" && srv.Cfg.IsUniqueImage == 1 {
+			srv.l.Info("call UniqueProcessImageFile")
 			err := UniqueProcessImageFile(fileNameInServer, fileNameInServerAugmented)
 			if err != nil {
 				srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessImageFile err", zap.Error(err))
@@ -596,6 +610,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		}
 
 		if postType == "video" && srv.Cfg.IsUniqueVideo == 1 {
+			srv.l.Info("call UniqueProcessVideoFile")
 			err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, false)
 			if err != nil {
 				srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessVideoFile err", zap.Error(err))
@@ -605,6 +620,8 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		}
 	}
 	futureVideoJson[postType] = fmt.Sprintf("@%s", fileNameInServer)
+
+	srv.l.Info("call fileNameInServerafter all", zap.Any("fileNameInServer", fileNameInServer))
 
 	formDataContentType, body, err := files.CreateForm(futureVideoJson)
 	if err != nil {
