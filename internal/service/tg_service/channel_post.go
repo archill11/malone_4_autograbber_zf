@@ -71,7 +71,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 		} else {
 			return fmt.Errorf("Media_Group без photo и video")
 		}
-		filePath, err := srv.downloadPostMedia(m, postType)
+		filePath, filePathAugmented, err := srv.downloadPostMediaV2(m, postType)
 		if err != nil {
 			return fmt.Errorf("Donor_addChannelPost downloadPostMedia err: %v", err)
 		}
@@ -79,6 +79,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 			Media_group_id:            *m.ChannelPost.MediaGroupId,
 			Type_media:                postType,
 			File_name_in_server:       filePath,
+			File_name_in_server_augmented: filePathAugmented,
 			Donor_message_id:          message_id,
 			Reply_to_donor_message_id: 0,
 			Caption:                   "",
@@ -560,6 +561,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	}
 	fileNameInServer := fmt.Sprintf("./files/%s.%s", getFileResp.Result.File_unique_id, fileType)
 	fileNameInServerAugmented := fmt.Sprintf("./files/%s_augmented.%s", getFileResp.Result.File_unique_id, fileType)
+	
 	srv.l.Info(fmt.Sprintf(
 		"sendChPostAsVamp_Video_or_Photo: fileNameInServer: %s, fileNameInServerAugmented: %s",
 		fileNameInServer,
@@ -669,27 +671,153 @@ func (srv *TgService) downloadPostMedia(m models.Update, postType string) (strin
 		fileType = fileNameDir[1]
 	}
 	fileNameInServer := fmt.Sprintf("./files/%s.%s", GetFileResp.Result.File_unique_id, fileType)
+
 	filePath := GetFileResp.Result.File_path
 	filePath = strings.TrimPrefix(filePath, fmt.Sprintf("/var/lib/telegram-bot-api/%s", srv.Cfg.Token))
 	tgFileUrl := fmt.Sprintf("%s/file/bot%s/%s", srv.Cfg.TgLocUrl, srv.Cfg.Token, filePath)
+
 	err = files.DownloadFile(fileNameInServer, tgFileUrl)
 	if err != nil {
 		return "", fmt.Errorf("downloadPostMedia DownloadFile err: %v", err)
 	}
+
 	srv.l.Info(fmt.Sprintf("downloadPostMedia done, fileNameInServer: %s", fileNameInServer))
+
 	return fileNameInServer, nil
+}
+
+func (srv *TgService) downloadPostMediaV2(m models.Update, postType string) (string, string, error) {
+	var fileId string
+	if postType == "photo" {
+		fileId = m.ChannelPost.Photo[len(m.ChannelPost.Photo)-1].FileId
+	} else if m.ChannelPost.Video != nil {
+		fileId = m.ChannelPost.Video.FileId
+	}
+	srv.l.Info(fmt.Sprintf("downloadPostMedia: getting file: %s", fmt.Sprintf(srv.Cfg.TgEndp, srv.Cfg.Token, "getFile?file_id="+fileId)))
+	
+	GetFileResp, err := srv.GetFile(fileId)
+	if err != nil {
+		return "", "", fmt.Errorf("downloadPostMedia GetFile fileId-%s err: %v", fileId, err)
+	}
+	
+	fileNameDir := strings.Split(GetFileResp.Result.File_path, ".")
+	fileType := "mp4"
+	if len(fileNameDir) > 1 {
+		fileType = fileNameDir[1]
+	}
+	fileNameInServer := fmt.Sprintf("./files/%s.%s", GetFileResp.Result.File_unique_id, fileType)
+	fileNameInServerAugmented := fmt.Sprintf("./files/%s_augmented.%s",  GetFileResp.Result.File_unique_id, fileType)
+
+	filePath := GetFileResp.Result.File_path
+	filePath = strings.TrimPrefix(filePath, fmt.Sprintf("/var/lib/telegram-bot-api/%s", srv.Cfg.Token))
+	tgFileUrl := fmt.Sprintf("%s/file/bot%s/%s", srv.Cfg.TgLocUrl, srv.Cfg.Token, filePath)
+
+	err = files.DownloadFile(fileNameInServer, tgFileUrl)
+	if err != nil {
+		return "" , "", fmt.Errorf("downloadPostMedia DownloadFile err: %v", err)
+	}
+
+	srv.l.Info(fmt.Sprintf("downloadPostMedia done, fileNameInServer: %s", fileNameInServer))
+
+	return fileNameInServer, fileNameInServerAugmented, nil
 }
 
 func (srv *TgService) sendAndDeleteMedia(vampBot entity.Bot, fileNameInServer string, postType string) (string, int, error) {
 	futureJson := map[string]string{
 		"chat_id": strconv.Itoa(vampBot.ChId),
 	}
-	if srv.Cfg.IsChangeMediaMetadata == 1 {
+
+	if postType == "video" && srv.Cfg.IsChangeMediaMetadata == 1 {
 		err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
 		if err != nil {
 			srv.l.Error("sendAndDeleteMedia RandomizeMP4Metadata err", zap.Error(err))
 		}
 	}
+
+	futureJson[postType] = fmt.Sprintf("@%s", fileNameInServer)
+	
+	cf, body, err := files.CreateForm(futureJson)
+	if err != nil {
+		return "", 0, fmt.Errorf("sendAndDeleteMedia CreateForm err: %v", err)
+	}
+	method := "sendVideo"
+	if postType == "photo" {
+		method = "sendPhoto"
+	}
+
+	sendMediaResp, err := http.Post(
+		fmt.Sprintf(srv.Cfg.TgLocEndp, vampBot.Token, method),
+		cf,
+		body,
+	)
+	if err != nil {
+		return "", 0, fmt.Errorf("sendAndDeleteMedia Post err: %v", err)
+	}
+	defer sendMediaResp.Body.Close()
+	var cAny2 models.SendMediaResp
+	if err := json.NewDecoder(sendMediaResp.Body).Decode(&cAny2); err != nil && err != io.EOF {
+		return "", 0, fmt.Errorf("sendAndDeleteMedia Decode err: %v", err)
+	}
+	if cAny2.ErrorCode != 0 {
+		return "", 0, fmt.Errorf("sendAndDeleteMedia method-%s errorResp: %+v", method, cAny2)
+	}
+
+	err = srv.DeleteMessage(vampBot.ChId, cAny2.Result.MessageId, vampBot.Token)
+	if err != nil {
+		srv.l.Error(fmt.Sprintf("sendAndDeleteMedia DeleteMessage err: %v", err))
+	}
+
+	var fileId string
+	if postType == "photo" {
+		if len(cAny2.Result.Photo) > 0 {
+			fileId = cAny2.Result.Photo[len(cAny2.Result.Photo)-1].FileId
+		}
+	} else if postType == "video" {
+		if cAny2.Result.Video.FileId != "" {
+			fileId = cAny2.Result.Video.FileId
+		}
+	} else {
+		return "", 0, fmt.Errorf("sendAndDeleteMedia: no photo, no video :(")
+	}
+	return fileId, cAny2.Result.MessageId, nil
+}
+
+func (srv *TgService) sendAndDeleteMediaV2(
+	vampBot entity.Bot,
+	fileNameInServer, fileNameInServerAugmented string,
+	postType string,
+) (string, int, error) {
+	futureJson := map[string]string{
+		"chat_id": strconv.Itoa(vampBot.ChId),
+	}
+
+	if postType == "video" && srv.Cfg.IsChangeMediaMetadata == 1 {
+		err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
+		if err != nil {
+			srv.l.Error("sendAndDeleteMedia RandomizeMP4Metadata err", zap.Error(err))
+		}
+	}
+
+	if postType == "photo" && srv.Cfg.IsUniqueImage == 1 {
+		srv.l.Info("call UniqueProcessImageFile")
+		err := UniqueProcessImageFile(fileNameInServer, fileNameInServerAugmented)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessImageFile err", zap.Error(err))
+		} else {
+			fileNameInServer = fileNameInServerAugmented
+		}
+	}
+
+	if postType == "video" && srv.Cfg.IsUniqueVideo == 1 {
+		srv.l.Info("call UniqueProcessVideoFile")
+		err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, false)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessVideoFile err", zap.Error(err))
+		} else {
+			fileNameInServer = fileNameInServerAugmented
+		}
+	}
+
 	futureJson[postType] = fmt.Sprintf("@%s", fileNameInServer)
 	
 	cf, body, err := files.CreateForm(futureJson)
@@ -777,7 +905,12 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		mycopy.DeepCopy(mediaArr, &mediaArrCoppy)
 
 		for i, media := range mediaArrCoppy {
-			fileId, messageId, err := s.sendAndDeleteMedia(vampBot, media.File_name_in_server, media.Type_media)
+			fileId, messageId, err := s.sendAndDeleteMediaV2(
+				vampBot,
+				media.File_name_in_server,
+				media.File_name_in_server_augmented,
+				media.Type_media,
+			)
 			if err != nil {
 				s.l.Error(fmt.Sprintf("sendChPostAsVamp_Media_Group sendAndDeleteMedia ChLink-%s err", vampBot.ChLink), zap.Error(err))
 			}
@@ -828,7 +961,9 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		sort.Slice(mediaArrCoppy, func(i, j int) (less bool) { //сортировка по MessageId
 			return mediaArrCoppy[i].MessageId < mediaArrCoppy[j].MessageId
 		})
+
 		s.l.Info("sendChPostAsVamp_Media_Group mediaArrCoppy:", zap.Any("mediaArrCoppy", mediaArrCoppy))
+
 		for _, med := range mediaArrCoppy {
 			nwmd := models.InputMedia{
 				Type:            med.Type_media,

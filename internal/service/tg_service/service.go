@@ -71,6 +71,7 @@ type (
 		Media_group_id            string
 		Type_media                string
 		File_name_in_server       string
+		File_name_in_server_augmented string
 		Donor_message_id          int
 		Reply_to_donor_message_id int // реплай на сообщение в канале доноре
 		Caption                   string
