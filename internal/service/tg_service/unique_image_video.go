@@ -37,6 +37,11 @@ func UniqueProcessVideoFile(inputPath, outputPath string, is_krug bool) error {
 	return uniqueVideo(inputPath, outputPath, is_krug)
 }
 
+// processVideoFile запускает uniqueVideo для указанных файлов.
+func UniqueProcessVideoNoteFile(inputPath, outputPath string) error {
+	return uniqueVideoNote(inputPath, outputPath)
+}
+
 // uniqueImage applies random geometric and color transforms and optionally overlays a timestamp text.
 func uniqueImage(src image.Image) image.Image {
 	bounds := src.Bounds()
@@ -138,6 +143,27 @@ func uniqueVideo(inPath, outPath string, is_krug bool) error {
 	}
 
 	vf := strings.Join(vfParts, ",")
+
+	cmd := ffmpeg.Input(inPath).
+		Output(outPath, ffmpeg.KwArgs{
+			"c:v":   "libx264",
+			"preset": "veryfast",
+			"vf":    vf,
+		}).
+		OverWriteOutput().
+		ErrorToStdOut()
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func uniqueVideoNote(inPath, outPath string) error {
+	// Усиленные, но разумные значения, чтобы эффект был заметен.
+	brightness := 0.2 * (rand.Float64()*2 - 1)   // -0.2..0.2
+	contrast := 1.0 + (rand.Float64()*0.3 - 0.15) // 0.85..1.15
+	vf := fmt.Sprintf("eq=brightness=%.3f:contrast=%.3f", brightness, contrast)
 
 	cmd := ffmpeg.Input(inPath).
 		Output(outPath, ffmpeg.KwArgs{

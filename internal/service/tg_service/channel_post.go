@@ -419,23 +419,17 @@ func (srv *TgService) sendChPostAsVamp_VideoNote(vampBot entity.Bot, m models.Up
 		if err != nil {
 			return fmt.Errorf("sendChPostAsVamp_VideoNote DownloadFile err: %v", err)
 		}
+	}
 
-		if srv.Cfg.IsChangeMediaMetadata == 1 {
-			err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
-			if err != nil {
-				srv.l.Error("sendChPostAsVamp_VideoNote RandomizeMP4Metadata err", zap.Error(err))
-			}
-		}
-
-		if srv.Cfg.IsUniqueVideo == 1 {
-			err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, true)
-			if err != nil {
-				srv.l.Error("sendChPostAsVamp_VideoNote UniqueProcessVideoFile err", zap.Error(err))
-			} else {
-				fileNameInServer = fileNameInServerAugmented
-			}
+	if srv.Cfg.IsUniqueVideo == 1 {
+		err := UniqueProcessVideoNoteFile(fileNameInServer, fileNameInServerAugmented)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_VideoNote UniqueProcessVideoNoteFile err", zap.Error(err))
+		} else {
+			fileNameInServer = fileNameInServerAugmented
 		}
 	}
+
 	futureVideoNoteJson["video_note"] = fmt.Sprintf("@%s", fileNameInServer)
 	cf, body, err := files.CreateForm(futureVideoNoteJson)
 	if err != nil {
