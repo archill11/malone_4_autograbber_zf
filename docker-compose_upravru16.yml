@@ -17,6 +17,7 @@ services:
     volumes:
       - ./volumes/logs:/app/logs
       - ./volumes/files:/app/files
+      - ./volumes/font:/app/font
     networks:
       - malone_4
 
