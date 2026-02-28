@@ -164,12 +164,13 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 
 			} else if srv.Cfg.IsShortLinkToClick == 1 {
 				botInfo, _ := srv.db.GetBotInfoById(vampBot.Id)
-				srv.l.Info("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", zap.Any("botInfo.ToClickShortLink", botInfo.ToClickShortLink))
 				if botInfo.ToClickShortLink != "" {
 					refLink = botInfo.ToClickShortLink
 				} else {
 					newUrlResp, err := srv.CreateShortLinkWithWaiting(refLink)
-					srv.l.Error("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", zap.Any("newUrlResp", newUrlResp), zap.Any("err", err))
+					if err != nil {
+						srv.l.Error("CreateShortLinkWithWaiting 22_33 err", zap.Any("newUrlResp", newUrlResp), zap.Any("err", err))
+					}
 					if newUrlResp.Link != "" {
 						refLink = newUrlResp.Link
 						srv.db.EditBotToClickShortLink(vampBot.Id, refLink)
