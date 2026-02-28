@@ -43,19 +43,21 @@ func Get() *Config {
 	c.Tg.ChForStat, _ = strconv.Atoi(os.Getenv("CH_FOR_STAT"))
 	c.Tg.ChForStatErrors, _ = strconv.Atoi(os.Getenv("CH_FOR_STAT_ERRORS"))
 
-	c.Tg.BotPrefix = os.Getenv("BOT_PREFIX")
-	c.Tg.DefaultLichka = os.Getenv("DEFAULT_LICHKA")
-	c.Tg.IsPersonalLinks, _ = strconv.Atoi(os.Getenv("IS_PERSONAL_LINKS")) // персональные ссылки для каждого бота
-	c.Tg.IsMultiGrabber, _ = strconv.Atoi(os.Getenv("IS_MULTI_GRABBER")) // возможность привязывать одного граббера к разным каналам донорам
-	c.Tg.IsGptText, _ = strconv.Atoi(os.Getenv("IS_GPT_TEXT")) // создание уникальных текстов
-	c.Tg.IsGptTextV2, _ = strconv.Atoi(os.Getenv("IS_GPT_TEXT_V2")) // создание уникальных текстов v2
-	c.Tg.IsGptTextOpenAI, _ = strconv.Atoi(os.Getenv("IS_GPT_TEXT_OPENAI")) // создание уникальных текстов через openai API
-	c.Tg.OpenAiAPIToken = os.Getenv("OPENAI_API_TOKEN")
-	c.Tg.IsShortLink, _ = strconv.Atoi(os.Getenv("IS_CHORT_LINK")) // создание уникальных сокращенных ссылок
-	c.Tg.ShortLinkUrl  = os.Getenv("CHORT_LINK_URL") // url создание уникальных сокращенных ссылок
+	c.Tg.BotPrefix                             = os.Getenv("BOT_PREFIX")
+	c.Tg.DefaultLichka                         = os.Getenv("DEFAULT_LICHKA")
+	c.Tg.IsPersonalLinks, _       = strconv.Atoi(os.Getenv("IS_PERSONAL_LINKS")) // персональные ссылки для каждого бота
+	c.Tg.IsMultiGrabber, _        = strconv.Atoi(os.Getenv("IS_MULTI_GRABBER")) // возможность привязывать одного граббера к разным каналам донорам
+	c.Tg.IsGptText, _             = strconv.Atoi(os.Getenv("IS_GPT_TEXT")) // создание уникальных текстов
+	c.Tg.IsGptTextV2, _           = strconv.Atoi(os.Getenv("IS_GPT_TEXT_V2")) // создание уникальных текстов v2
+	c.Tg.IsGptTextOpenAI, _       = strconv.Atoi(os.Getenv("IS_GPT_TEXT_OPENAI")) // создание уникальных текстов через openai API
+	c.Tg.OpenAiAPIToken                        = os.Getenv("OPENAI_API_TOKEN")
+	c.Tg.IsShortLink, _           = strconv.Atoi(os.Getenv("IS_CHORT_LINK")) // создание уникальных сокращенных ссылок
+	c.Tg.ShortLinkUrl                          = os.Getenv("CHORT_LINK_URL") // url создание уникальных сокращенных ссылок
+	c.Tg.IsShortLinkToClick, _    = strconv.Atoi(os.Getenv("IS_CHORT_LINK_TO_CLICK")) // создание уникальных сокращенных ссылок через to.click
+	c.Tg.ToClickToken                          = os.Getenv("TO_CLICK_TOKEN") // token создание уникальных сокращенных ссылок через to.click
 	c.Tg.IsChangeMediaMetadata, _ = strconv.Atoi(os.Getenv("IS_CHANGE_MEDIA_METADATA")) // поменять метадату в медиафайлах
-	c.Tg.IsUniqueVideo, _ = strconv.Atoi(os.Getenv("IS_UNIQUE_VIDEO")) // уникальные видео через ffmpeg
-	c.Tg.IsUniqueImage, _ = strconv.Atoi(os.Getenv("IS_UNIQUE_IMAGE")) // уникальные картинки через imaging и gg
+	c.Tg.IsUniqueVideo, _         = strconv.Atoi(os.Getenv("IS_UNIQUE_VIDEO")) // уникальные видео через ffmpeg
+	c.Tg.IsUniqueImage, _         = strconv.Atoi(os.Getenv("IS_UNIQUE_IMAGE")) // уникальные картинки через imaging и gg
 
 
 	c.Server.Port = os.Getenv("APP_PORT")

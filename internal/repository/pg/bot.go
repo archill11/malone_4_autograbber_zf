@@ -322,3 +322,31 @@ func (s *Database) EditBotIsErrInStat(botId, is_err_in_stat int) error {
 	}
 	return nil
 }
+
+func (s *Database) EditBotToClickShortLink(botId int, to_click_short_link string) error {
+	q := `
+		UPDATE bots SET
+			to_click_short_link = $1
+		WHERE id = $2
+	`
+	_, err := s.Exec(q, to_click_short_link, botId)
+	if err != nil {
+		return fmt.Errorf("db: EditBotToClickShortLink: to_click_short_link: %s botId: %d err: %w", to_click_short_link, botId, err)
+
+	}
+	return nil
+}
+
+func (s *Database) EditBotToClickShortLinkToLichka(botId int, to_click_short_link_to_lichka string) error {
+	q := `
+		UPDATE bots SET
+			to_click_short_link_to_lichka = $1
+		WHERE id = $2
+	`
+	_, err := s.Exec(q, to_click_short_link_to_lichka, botId)
+	if err != nil {
+		return fmt.Errorf("db: EditBotToClickShortLink: to_click_short_link: %s botId: %d err: %w", to_click_short_link_to_lichka, botId, err)
+
+	}
+	return nil
+}

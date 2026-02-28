@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS bots (
     personal_link     TEXT DEFAULT '',
     donor_ch_id       BIGINT DEFAULT 0,
     is_err_in_stat    INT DEFAULT 0,
+    to_click_short_link TEXT DEFAULT '',
+    to_click_short_link_to_lichka TEXT DEFAULT '',
     PRIMARY KEY (id, token)
 );
 
@@ -22,6 +24,12 @@ CREATE TABLE IF NOT EXISTS bots (
 
 ALTER TABLE bots
   ADD COLUMN IF NOT EXISTS personal_link TEXT DEFAULT '';
+
+ALTER TABLE bots
+  ADD COLUMN IF NOT EXISTS to_click_short_link TEXT DEFAULT '';
+
+ALTER TABLE bots
+  ADD COLUMN IF NOT EXISTS to_click_short_link_to_lichka TEXT DEFAULT '';
 
 ALTER TABLE bots
   ADD COLUMN IF NOT EXISTS donor_ch_id BIGINT DEFAULT 0;

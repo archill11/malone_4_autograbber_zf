@@ -48,6 +48,8 @@ type (
 		OpenAiAPIToken  string
 		IsShortLink  int
 		ShortLinkUrl  string
+		IsShortLinkToClick  int
+		ToClickToken  string
 		IsChangeMediaMetadata int
 		IsUniqueVideo int
 		IsUniqueImage int

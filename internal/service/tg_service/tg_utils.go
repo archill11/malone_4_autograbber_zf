@@ -203,9 +203,25 @@ func randRange(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
-func (srv *TgService) CreateShortLink(name, url string) (models.CreateShortLinkResp, error) {
+func (srv *TgService) CreateShortLink(url string) (models.CreateShortLinkResp, error) {
+	if srv.Cfg.IsShortLink == 1 && srv.Cfg.ShortLinkUrl != "" {
+		return srv.CreateShortLinkOwne(url)
+	}
+
+	if srv.Cfg.IsShortLinkToClick == 1 && srv.Cfg.ToClickToken != "" {
+		shortLink, err := ToClick_CreateShortLink(url, srv.Cfg.ToClickToken)
+		if err != nil {
+			return models.CreateShortLinkResp{}, fmt.Errorf("CreateShortLink ToClick_CreateShortLink err: %v", err)
+		}
+		return models.CreateShortLinkResp{Link: shortLink}, nil
+	}
+
+	return models.CreateShortLinkResp{}, fmt.Errorf("CreateShortLink err: no one resourse not found")
+}
+
+func (srv *TgService) CreateShortLinkOwne(url string) (models.CreateShortLinkResp, error) {
 	json_data, err := json.Marshal(map[string]any{
-		"name": name,
+		"name": url,
 		"link": url,
 	})
 	if err != nil {
@@ -231,28 +247,28 @@ func (srv *TgService) CreateShortLink(name, url string) (models.CreateShortLinkR
 	return j, nil
 }
 
-func (srv *TgService) CreateShortLinkWithWaiting(name, url string) (models.CreateShortLinkResp, error) {
-	newUrlResp, err := srv.CreateShortLink(name, url)
+func (srv *TgService) CreateShortLinkWithWaiting(url string) (models.CreateShortLinkResp, error) {
+	newUrlResp, err := srv.CreateShortLink(url)
 	if err != nil || newUrlResp.Link == "" {
 		time.Sleep(time.Second*7)
 
-		newUrlResp, err := srv.CreateShortLink(name, url)
+		newUrlResp, err := srv.CreateShortLink(url)
 		if err != nil || newUrlResp.Link == "" {
 			time.Sleep(time.Second*7)
 
-			newUrlResp, err := srv.CreateShortLink(name, url)
+			newUrlResp, err := srv.CreateShortLink(url)
 			if err != nil || newUrlResp.Link == "" {
 				time.Sleep(time.Second*7)
 
-				newUrlResp, err := srv.CreateShortLink(name, url)
+				newUrlResp, err := srv.CreateShortLink(url)
 				if err != nil || newUrlResp.Link == "" {
 					time.Sleep(time.Second*7)
 
-					newUrlResp, err := srv.CreateShortLink(name, url)
+					newUrlResp, err := srv.CreateShortLink(url)
 					if err != nil || newUrlResp.Link == "" {
 						time.Sleep(time.Second*7)
 
-						newUrlResp, err := srv.CreateShortLink(name, url)
+						newUrlResp, err := srv.CreateShortLink(url)
 						if err != nil || newUrlResp.Link == "" {
 							return newUrlResp, err
 						}
