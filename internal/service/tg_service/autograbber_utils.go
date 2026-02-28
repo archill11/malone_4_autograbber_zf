@@ -131,11 +131,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 				break
 			}
 			refLink := groupLink.Link
-			if srv.Cfg.IsPersonalLinks == 1 {
-				if vampBot.PersonalLink != "" {
-					refLink = vampBot.PersonalLink
-				}
-			}
+
 			if srv.Cfg.IsShortLink == 1 && srv.Cfg.IsShortLinkToClick == 0 {
 				newUrlResp, err := srv.CreateShortLinkWithWaiting(refLink)
 				if err != nil || newUrlResp.Link == "" {
@@ -177,6 +173,13 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 					}
 				}
 			}
+
+			if srv.Cfg.IsPersonalLinks == 1 {
+				if vampBot.PersonalLink != "" {
+					refLink = vampBot.PersonalLink
+				}
+			}
+
 			entities[i].Url = refLink
 			continue
 		}
