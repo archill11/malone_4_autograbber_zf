@@ -105,8 +105,8 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 					newUrlResp, _ := srv.CreateShortLinkWithWaiting(urlLichka)
 					if newUrlResp.Link != "" {
 						urlLichka = newUrlResp.Link
+						srv.db.EditBotToClickShortLinkToLichka(vampBot.Id, urlLichka)
 					}
-					srv.db.EditBotToClickShortLinkToLichka(vampBot.Id, urlLichka)
 				}
 			}
 
@@ -164,14 +164,16 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 
 			} else if srv.Cfg.IsShortLinkToClick == 1 {
 				botInfo, _ := srv.db.GetBotInfoById(vampBot.Id)
+				srv.l.Info("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", zap.Any("botInfo.ToClickShortLink", botInfo.ToClickShortLink))
 				if botInfo.ToClickShortLink != "" {
 					refLink = botInfo.ToClickShortLink
 				} else {
-					newUrlResp, _ := srv.CreateShortLinkWithWaiting(refLink)
+					newUrlResp, err := srv.CreateShortLinkWithWaiting(refLink)
+					srv.l.Error("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", zap.Any("newUrlResp", newUrlResp), zap.Any("err", err))
 					if newUrlResp.Link != "" {
 						refLink = newUrlResp.Link
+						srv.db.EditBotToClickShortLink(vampBot.Id, refLink)
 					}
-					srv.db.EditBotToClickShortLink(vampBot.Id, refLink)
 				}
 			}
 			entities[i].Url = refLink
