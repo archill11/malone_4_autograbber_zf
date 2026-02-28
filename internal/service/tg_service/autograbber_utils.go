@@ -70,7 +70,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 			lichka := srv.DelAt(vampBot.Lichka)
 			urlLichka := fmt.Sprintf("https://t.me/%v", lichka)
 
-			if srv.Cfg.IsShortLink == 1 || srv.Cfg.IsShortLinkToClick == 0 {
+			if srv.Cfg.IsShortLink == 1 && srv.Cfg.IsShortLinkToClick == 0 {
 				newUrlResp, err := srv.CreateShortLinkWithWaiting(urlLichka)
 				srv.l.Debug("МЕТОД PrepareEntities go CreateShortLinkWithWaiting", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
 				if err != nil || newUrlResp.Link == "" {
@@ -136,7 +136,7 @@ func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText 
 					refLink = vampBot.PersonalLink
 				}
 			}
-			if srv.Cfg.IsShortLink == 1 || srv.Cfg.IsShortLinkToClick == 0 {
+			if srv.Cfg.IsShortLink == 1 && srv.Cfg.IsShortLinkToClick == 0 {
 				newUrlResp, err := srv.CreateShortLinkWithWaiting(refLink)
 				if err != nil || newUrlResp.Link == "" {
 					err := fmt.Errorf("PrepareEntities CreateShortLinkWithWaiting err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, refLink)
