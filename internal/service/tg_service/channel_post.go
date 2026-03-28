@@ -273,12 +273,13 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 	if len(m.ChannelPost.Entities) > 0 {
 		entities := make([]models.MessageEntity, 0)
 		mycopy.DeepCopy(m.ChannelPost.Entities, &entities)
+		sourceMessText := messText
 
 		if srv.Cfg.IsGptText == 1 {
 			messText = srv.ReplaceSymbolsOrApenAI(messText)
 		}
 
-		newEntities, newMessText, err := srv.PrepareEntities(entities, messText, vampBot)
+		newEntities, newMessText, err := srv.PrepareEntities(entities, sourceMessText, messText, vampBot)
 		if err != nil {
 			return fmt.Errorf("sendChPostAsVamp PrepareEntities err: %v", err)
 		}
@@ -287,10 +288,11 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 			futureMesJson["entities"] = newEntities
 		}
 	} else {
+		sourceMessText := messText
 		if srv.Cfg.IsGptText == 1 {
 			messText = srv.ReplaceSymbolsOrApenAI(messText)
 		}
-		_, newMessText, err := srv.PrepareEntities(nil, messText, vampBot)
+		_, newMessText, err := srv.PrepareEntities(nil, sourceMessText, messText, vampBot)
 		if err != nil {
 			return fmt.Errorf("sendChPostAsVamp PrepareEntities 2 err: %v", err)
 		}
@@ -509,11 +511,12 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	if len(m.ChannelPost.CaptionEntities) > 0 {
 		entities := make([]models.MessageEntity, 0)
 		mycopy.DeepCopy(m.ChannelPost.CaptionEntities, &entities)
+		sourceCaption := caption
 
 		if srv.Cfg.IsGptText == 1 {
             caption = srv.ReplaceSymbolsOrApenAI(caption)
         }
-		newEntities, newCaption, err := srv.PrepareEntities(entities, caption, vampBot)
+		newEntities, newCaption, err := srv.PrepareEntities(entities, sourceCaption, caption, vampBot)
 		if err != nil {
 			return fmt.Errorf("sendChPostAsVamp PrepareEntities err: %v", err)
 		}
@@ -932,11 +935,12 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 				mycopy.DeepCopy(media.Caption_entities, &entities)
 
 				newText := media.Caption
+				sourceText := media.Caption
 
 				if s.Cfg.IsGptText == 1 {
 					newText = s.ReplaceSymbolsOrApenAI(media.Caption)
 				}
-				newEntities, newText, err := s.PrepareEntities(entities, newText, vampBot)
+				newEntities, newText, err := s.PrepareEntities(entities, sourceText, newText, vampBot)
 				if err != nil {
 					return fmt.Errorf("sendChPostAsVamp PrepareEntities err: %v", err)
 				}

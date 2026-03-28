@@ -93,7 +93,7 @@ func (srv *TgService) editChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 					mycopy.DeepCopy(m.EditedChannelPost.Entities, &entities)
 					var newEntities []models.MessageEntity
 					var err error
-					newEntities, messText, err = srv.PrepareEntities(entities, messText, vampBot)
+					newEntities, messText, err = srv.PrepareEntities(entities, messText, messText, vampBot)
 					if err != nil {
 						return fmt.Errorf("editChPostAsVamp PrepareEntities err: %v", err)
 					}
@@ -151,7 +151,7 @@ func (srv *TgService) editChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 					mycopy.DeepCopy(m.EditedChannelPost.Entities, &entities)
 					var newEntities []models.MessageEntity
 					var err error
-					newEntities, messText, err = srv.PrepareEntities(entities, messText, vampBot)
+					newEntities, messText, err = srv.PrepareEntities(entities, messText, messText, vampBot)
 					if err != nil {
 						return fmt.Errorf("editChPostAsVamp PrepareEntities err: %v", err)
 					}
@@ -201,7 +201,7 @@ func (srv *TgService) editChPostAsVamp(vampBot entity.Bot, m models.Update) erro
 				mycopy.DeepCopy(m.EditedChannelPost.Entities, &entities)
 				var newEntities []models.MessageEntity
 				var err error
-				newEntities, messText, err = srv.PrepareEntities(entities, messText, vampBot)
+				newEntities, messText, err = srv.PrepareEntities(entities, messText, messText, vampBot)
 				if err != nil {
 					return fmt.Errorf("editChPostAsVamp PrepareEntities err: %v", err)
 				}

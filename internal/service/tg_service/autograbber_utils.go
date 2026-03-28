@@ -5,11 +5,241 @@ import (
 	"fmt"
 	"myapp/internal/entity"
 	"myapp/internal/models"
+	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf16"
+	"unicode/utf8"
 
 	"go.uber.org/zap"
 )
+
+func isValidUTF16EntityBoundary(text string, start, length int) bool {
+	if start < 0 || length <= 0 {
+		return false
+	}
+
+	end := start + length
+	if end < start {
+		return false
+	}
+
+	boundaries := make(map[int]struct{}, len(text)+1)
+	totalUnits := 0
+	boundaries[0] = struct{}{}
+
+	for _, r := range text {
+		if utf16.RuneLen(r) == 2 {
+			totalUnits += 2
+		} else {
+			totalUnits++
+		}
+		boundaries[totalUnits] = struct{}{}
+	}
+
+	if end > totalUnits {
+		return false
+	}
+
+	_, startOk := boundaries[start]
+	_, endOk := boundaries[end]
+	return startOk && endOk
+}
+
+func (srv *TgService) sanitizeEntitiesForText(entities []models.MessageEntity, text string) []models.MessageEntity {
+	if len(entities) == 0 {
+		return entities
+	}
+
+	validEntities := make([]models.MessageEntity, 0, len(entities))
+	for _, entity := range entities {
+		if isValidUTF16EntityBoundary(text, entity.Offset, entity.Length) {
+			validEntities = append(validEntities, entity)
+		}
+	}
+
+	if len(validEntities) != len(entities) {
+		srv.l.Warn("PrepareEntities: dropped invalid entities after text transform",
+			zap.Int("all_entities", len(entities)),
+			zap.Int("valid_entities", len(validEntities)),
+		)
+	}
+
+	return validEntities
+}
+
+func utf16UnitsByRuneIndex(text string) []int {
+	runes := []rune(text)
+	units := make([]int, len(runes)+1)
+	for i, r := range runes {
+		step := 1
+		if utf16.RuneLen(r) == 2 {
+			step = 2
+		}
+		units[i+1] = units[i] + step
+	}
+	return units
+}
+
+func byteOffsetsByRuneIndex(text string) []int {
+	runes := []rune(text)
+	offsets := make([]int, len(runes)+1)
+	bytePos := 0
+	for i, r := range runes {
+		offsets[i] = bytePos
+		bytePos += utf8.RuneLen(r)
+	}
+	offsets[len(runes)] = len(text)
+	return offsets
+}
+
+func runeIndexByByteOffset(offsets []int, byteOffset int) (int, bool) {
+	i := sort.SearchInts(offsets, byteOffset)
+	if i >= len(offsets) || offsets[i] != byteOffset {
+		return 0, false
+	}
+	return i, true
+}
+
+func extractEntityTextByUTF16(text string, start, length int) (string, bool) {
+	if !isValidUTF16EntityBoundary(text, start, length) {
+		return "", false
+	}
+
+	units := utf16UnitsByRuneIndex(text)
+	startRune := sort.SearchInts(units, start)
+	endRune := sort.SearchInts(units, start+length)
+	if startRune >= len(units) || endRune >= len(units) || units[startRune] != start || units[endRune] != start+length || endRune <= startRune {
+		return "", false
+	}
+
+	runes := []rune(text)
+	return string(runes[startRune:endRune]), true
+}
+
+func normalizeForSearch(v string) string {
+	v = strings.ToLower(v)
+	v = strings.ReplaceAll(v, "ё", "е")
+	v = strings.TrimSpace(v)
+	return v
+}
+
+func firstNonEmptyLineSpan(text string) (string, int, int, bool) {
+	lines := strings.Split(text, "\n")
+	bytePos := 0
+	for _, line := range lines {
+		lineNoCR := strings.TrimSuffix(line, "\r")
+		trimmed := strings.TrimSpace(lineNoCR)
+		if trimmed != "" {
+			startInLine := strings.Index(lineNoCR, trimmed)
+			if startInLine < 0 {
+				startInLine = 0
+			}
+			startByte := bytePos + startInLine
+			endByte := startByte + len(trimmed)
+			return trimmed, startByte, endByte, true
+		}
+		bytePos += len(line) + 1
+	}
+	return "", 0, 0, false
+}
+
+func remapEntityToNewText(entity models.MessageEntity, oldText, newText string, minRuneStart int) (models.MessageEntity, int, bool) {
+	oldPart, ok := extractEntityTextByUTF16(oldText, entity.Offset, entity.Length)
+	if !ok {
+		return models.MessageEntity{}, 0, false
+	}
+
+	newRunes := []rune(newText)
+	newRuneToByte := byteOffsetsByRuneIndex(newText)
+	newUTF16Units := utf16UnitsByRuneIndex(newText)
+
+	// 1) Exact text search in new text, preserving entity order.
+	if minRuneStart < 0 {
+		minRuneStart = 0
+	}
+	if minRuneStart > len(newRunes) {
+		minRuneStart = len(newRunes)
+	}
+	startByte := newRuneToByte[minRuneStart]
+	relByte := strings.Index(newText[startByte:], oldPart)
+	if relByte >= 0 {
+		foundStartByte := startByte + relByte
+		foundEndByte := foundStartByte + len(oldPart)
+		startRune, okStart := runeIndexByByteOffset(newRuneToByte, foundStartByte)
+		endRune, okEnd := runeIndexByByteOffset(newRuneToByte, foundEndByte)
+		if okStart && okEnd && endRune > startRune {
+			entity.Offset = newUTF16Units[startRune]
+			entity.Length = newUTF16Units[endRune] - newUTF16Units[startRune]
+			return entity, endRune, true
+		}
+	}
+
+	// 2) Mention fallback: try to find the same mention token ignoring case.
+	if entity.Type == "mention" {
+		oldNorm := normalizeForSearch(oldPart)
+		if oldNorm != "" {
+			searchArea := strings.ToLower(newText[startByte:])
+			idx := strings.Index(searchArea, oldNorm)
+			if idx >= 0 {
+				foundStartByte := startByte + idx
+				foundEndByte := foundStartByte + len(oldNorm)
+				startRune, okStart := runeIndexByByteOffset(newRuneToByte, foundStartByte)
+				endRune, okEnd := runeIndexByByteOffset(newRuneToByte, foundEndByte)
+				if okStart && okEnd && endRune > startRune {
+					entity.Offset = newUTF16Units[startRune]
+					entity.Length = newUTF16Units[endRune] - newUTF16Units[startRune]
+					return entity, endRune, true
+				}
+			}
+		}
+	}
+
+	// 3) text_link fallback: attach link to the first non-empty line in the new text.
+	if entity.Type == "text_link" {
+		_, lineStartByte, lineEndByte, ok := firstNonEmptyLineSpan(newText)
+		if ok {
+			startRune, okStart := runeIndexByByteOffset(newRuneToByte, lineStartByte)
+			endRune, okEnd := runeIndexByByteOffset(newRuneToByte, lineEndByte)
+			if okStart && okEnd && endRune > startRune {
+				entity.Offset = newUTF16Units[startRune]
+				entity.Length = newUTF16Units[endRune] - newUTF16Units[startRune]
+				return entity, endRune, true
+			}
+		}
+	}
+
+	return models.MessageEntity{}, 0, false
+}
+
+func (srv *TgService) rebaseEntitiesToNewText(entities []models.MessageEntity, oldText, newText string) []models.MessageEntity {
+	if len(entities) == 0 {
+		return entities
+	}
+	if oldText == newText {
+		return entities
+	}
+
+	rebased := make([]models.MessageEntity, 0, len(entities))
+	nextRuneStart := 0
+	for _, entity := range entities {
+		newEntity, endRune, ok := remapEntityToNewText(entity, oldText, newText, nextRuneStart)
+		if !ok {
+			continue
+		}
+		rebased = append(rebased, newEntity)
+		nextRuneStart = endRune
+	}
+
+	if len(rebased) != len(entities) {
+		srv.l.Warn("PrepareEntities: some entities were not remapped to new text",
+			zap.Int("all_entities", len(entities)),
+			zap.Int("rebased_entities", len(rebased)),
+		)
+	}
+
+	return rebased
+}
 
 // метод заменяет ссылку на канал и пост такого вида https://t.me/c/1949679854/4333, под конкретного vampBota
 func (srv *TgService) ChangeLinkReferredToPost(originalLink string, vampBot entity.Bot) (string, error) {
@@ -59,10 +289,16 @@ func (srv *TgService) ChangeLinkReferredToPost(originalLink string, vampBot enti
 
 // метод заменяет fake-link на нужную группу-ссылку vampBota
 // и вырезает все ссылки и Entities если группа-ссылка - cut-link
-func (srv *TgService) PrepareEntities(entities []models.MessageEntity, messText string, vampBot entity.Bot) ([]models.MessageEntity, string, error) {
+func (srv *TgService) PrepareEntities(
+	entities []models.MessageEntity,
+	sourceText, messText string,
+	vampBot entity.Bot,
+) ([]models.MessageEntity, string, error) {
 	srv.l.Info("PrepareEntities", zap.Any("vampBot", vampBot))
 
 	cutEntities := false
+
+	entities = srv.rebaseEntitiesToNewText(entities, sourceText, messText)
 
 	for i, v := range entities {
 		// если fake-link
