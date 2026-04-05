@@ -47,6 +47,8 @@ func Get() *Config {
 	c.Tg.DefaultLichka                         = os.Getenv("DEFAULT_LICHKA")
 	c.Tg.IsPersonalLinks, _       = strconv.Atoi(os.Getenv("IS_PERSONAL_LINKS")) // персональные ссылки для каждого бота
 	c.Tg.IsMultiGrabber, _        = strconv.Atoi(os.Getenv("IS_MULTI_GRABBER")) // возможность привязывать одного граббера к разным каналам донорам
+	c.Tg.IsUseProxy, _            = strconv.Atoi(os.Getenv("IS_USE_PROXY")) 
+	c.Tg.ProxyStr                              = os.Getenv("PROXY_STR") // login1:pass1@ip1:port1
 	c.Tg.IsGptText, _             = strconv.Atoi(os.Getenv("IS_GPT_TEXT")) // создание уникальных текстов
 	c.Tg.IsGptTextV2, _           = strconv.Atoi(os.Getenv("IS_GPT_TEXT_V2")) // создание уникальных текстов v2
 	c.Tg.IsGptTextOpenAI, _       = strconv.Atoi(os.Getenv("IS_GPT_TEXT_OPENAI")) // создание уникальных текстов через openai API

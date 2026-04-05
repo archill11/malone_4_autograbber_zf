@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"myapp/internal/models"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -391,7 +390,7 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgEndp, bot.Token, "getChat"),
 		"application/json",
 		bytes.NewBuffer(json_data),

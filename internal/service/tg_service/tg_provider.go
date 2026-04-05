@@ -7,8 +7,116 @@ import (
 	"io"
 	"myapp/internal/models"
 	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 )
+
+func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader) (resp *http.Response, err error) {
+	// Данные прокси
+	proxyURL := srv.Cfg.ProxyStr
+
+	if srv.Cfg.IsUseProxy == 1 && proxyURL != "" {
+		// Парсим URL прокси
+		proxy, err := url.Parse(proxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("parse proxy URL error: %v", err)
+		}
+		
+		// Настраиваем транспорт с прокси
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxy),
+			MaxIdleConns:    100,
+			IdleConnTimeout: 90 * time.Second,
+		}
+		
+		// Создаем HTTP клиент с транспортом
+		client := &http.Client{
+			Transport: transport,
+			Timeout:   30 * time.Second,
+		}
+		
+		// Создаем запрос
+		req, err := http.NewRequest("POST", urll, body)
+		if err != nil {
+			return nil, fmt.Errorf("create request error: %v", err)
+		}
+		
+		// Устанавливаем заголовки
+		if contentType != "" {
+			req.Header.Set("Content-Type", contentType)
+		}
+		
+		// Выполняем запрос
+		resp, err = client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("http request error: %v", err)
+		}
+	
+		// Получаем IP из RemoteAddr
+		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
+		if resp.Request != nil && resp.Request.URL != nil {
+			fmt.Printf("Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
+		}
+		
+		return resp, nil
+	}
+
+	resp, err = http.Post(urll, contentType, body)
+
+	return resp, err
+}
+
+func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
+	// Данные прокси
+	proxyURL := srv.Cfg.ProxyStr
+
+	if srv.Cfg.IsUseProxy == 1 && proxyURL != "" {
+		// Парсим URL прокси
+		proxy, err := url.Parse(proxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("parse proxy URL error: %v", err)
+		}
+		
+		// Настраиваем транспорт с прокси
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxy),
+			MaxIdleConns:    100,
+			IdleConnTimeout: 90 * time.Second,
+		}
+		
+		// Создаем HTTP клиент
+		client := &http.Client{
+			Transport: transport,
+			Timeout:   30 * time.Second,
+		}
+		
+		// Создаем GET запрос
+		req, err := http.NewRequest("GET", urll, nil)
+		if err != nil {
+			return nil, fmt.Errorf("create request error: %v", err)
+		}
+		
+		// Выполняем запрос
+		resp, err = client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("http request error: %v", err)
+		}
+	
+		// Получаем IP из RemoteAddr
+		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
+		if resp.Request != nil && resp.Request.URL != nil {
+			fmt.Printf("Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
+		}
+		
+		return resp, nil
+	}
+	
+	resp, err = http.Get(urll)
+
+	return resp, err
+}
+
 
 func (srv *TgService) GetUpdates(offset, timeout int, token string) ([]models.Update, error) {
 	json_data, err := json.Marshal(map[string]any{
@@ -18,7 +126,7 @@ func (srv *TgService) GetUpdates(offset, timeout int, token string) ([]models.Up
 	if err != nil {
 		return []models.Update{}, fmt.Errorf("GetUpdates Marshal err: %v", err)
 	}
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgLocEndp, token, "getUpdates"),
 		"application/json",
 		bytes.NewBuffer(json_data),
@@ -38,7 +146,7 @@ func (srv *TgService) GetUpdates(offset, timeout int, token string) ([]models.Up
 }
 
 func (srv *TgService) GetMe(token string) (models.ApiBotResp, error) {
-	resp, err := http.Get(fmt.Sprintf(srv.Cfg.TgEndp, token, "getMe"))
+	resp, err := srv.MyHttpGet(fmt.Sprintf(srv.Cfg.TgEndp, token, "getMe"))
 	if err != nil {
 		return models.ApiBotResp{}, fmt.Errorf("GetMe Get err: %v", err)
 	}
@@ -60,7 +168,7 @@ func (srv *TgService) GetChat(chatId int, token string) (models.GetChatResp, err
 	if err != nil {
 		return models.GetChatResp{}, err
 	}
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgEndp, token, "getChat"),
 		"application/json",
 		bytes.NewBuffer(json_data),
@@ -80,7 +188,7 @@ func (srv *TgService) GetChat(chatId int, token string) (models.GetChatResp, err
 }
 
 func (srv *TgService) GetFile(fileId string) (models.GetFileResp, error) {
-	resp, err := http.Get(
+	resp, err := srv.MyHttpGet(
 		fmt.Sprintf(srv.Cfg.TgLocEndp, srv.Cfg.Token, fmt.Sprintf("getFile?file_id=%s", fileId)),
 	)
 	if err != nil {
@@ -165,7 +273,7 @@ func (srv *TgService) SendMessageByTokenV2(chat int, mess string, token string) 
 	if err != nil {
 		return models.SendMessageResp{}, fmt.Errorf("SendMessageByToken Marshal err: %v", err)
 	}
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgEndp, token, "sendMessage"),
 		"application/json",
 		bytes.NewBuffer(json_data),
@@ -185,7 +293,7 @@ func (srv *TgService) SendMessageByTokenV2(chat int, mess string, token string) 
 }
 
 func (srv *TgService) SendMediaGroup(json_data []byte, token string) (models.SendMediaGroupResp, error) {
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgLocEndp, token, "sendMediaGroup"),
 		"application/json",
 		bytes.NewBuffer(json_data),
@@ -205,7 +313,7 @@ func (srv *TgService) SendMediaGroup(json_data []byte, token string) (models.Sen
 }
 
 func (srv *TgService) SendVideoNote(body io.Reader, contentType string, token string) (models.SendMediaResp, error) {
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgLocEndp, token, "sendVideoNote"),
 		contentType,
 		body,
@@ -257,7 +365,7 @@ func (srv *TgService) EditMessageCaption(json_data []byte, botToken string) erro
 }
 
 func (srv *TgService) sendData(json_data []byte, method string) error {
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgEndp, srv.Cfg.Token, method),
 		"application/json",
 		bytes.NewBuffer(json_data),
@@ -277,7 +385,7 @@ func (srv *TgService) sendData(json_data []byte, method string) error {
 }
 
 func (srv *TgService) sendData_v2(json_data []byte, botToken, method string) error {
-	resp, err := http.Post(
+	resp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgEndp, botToken, method),
 		"application/json",
 		bytes.NewBuffer(json_data),

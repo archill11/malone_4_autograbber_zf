@@ -42,6 +42,8 @@ type (
 		ChForStatErrors int
 		BotTokenForStat string
 		IsMultiGrabber  int
+		IsUseProxy  int
+		ProxyStr  string
 		IsGptText  int
 		IsGptTextV2  int
 		IsGptTextOpenAI  int
