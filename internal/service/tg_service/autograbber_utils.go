@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"myapp/internal/entity"
 	"myapp/internal/models"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -406,6 +407,16 @@ func (srv *TgService) PrepareEntities(
 					if newUrlResp.Link != "" {
 						refLink = newUrlResp.Link
 						srv.db.EditBotToClickShortLink(vampBot.Id, refLink)
+					}
+				}
+			}
+
+			if srv.Cfg.IsReplaceShortLinkDomen == 1 {
+				if vampBot.ShortDomenToReplace != "" {
+					parsedURL, err := url.Parse(refLink)
+					if err == nil {
+						host := parsedURL.Hostname()
+						refLink = strings.ReplaceAll(refLink, host, vampBot.ShortDomenToReplace)
 					}
 				}
 			}

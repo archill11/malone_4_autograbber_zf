@@ -350,3 +350,20 @@ func (s *Database) EditBotToClickShortLinkToLichka(botId int, to_click_short_lin
 	}
 	return nil
 }
+
+func (s *Database) EditBotShortDomenToReplace(
+	botId int,
+	short_domen_to_replace string,
+) error {
+	q := `
+		UPDATE bots SET
+			short_domen_to_replace = $1
+		WHERE id = $2
+	`
+	_, err := s.Exec(q, short_domen_to_replace, botId)
+	if err != nil {
+		return fmt.Errorf("EditBotShortDomenToReplace: short_domen_to_replace: %s botId: %d err: %w", short_domen_to_replace, botId, err)
+
+	}
+	return nil
+}

@@ -18,4 +18,6 @@ type Bot struct {
 	IsErrInStat              int    `json:"is_err_in_stat"`
 	ToClickShortLink         string `json:"to_click_short_link"`
 	ToClickShortLinkToLichka string `json:"to_click_short_link_to_lichka"`
+
+	ShortDomenToReplace string `json:"short_domen_to_replace"`
 }

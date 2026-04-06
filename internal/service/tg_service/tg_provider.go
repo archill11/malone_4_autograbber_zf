@@ -20,7 +20,7 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// Парсим URL прокси
 		proxy, err := url.Parse(proxyURL)
 		if err != nil {
-			return nil, fmt.Errorf("parse proxy URL error: %v", err)
+			return nil, fmt.Errorf("MyHttpPost parse proxy URL error: %v", err)
 		}
 		
 		// Настраиваем транспорт с прокси
@@ -39,7 +39,7 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// Создаем запрос
 		req, err := http.NewRequest("POST", urll, body)
 		if err != nil {
-			return nil, fmt.Errorf("create request error: %v", err)
+			return nil, fmt.Errorf("MyHttpPost create request error: %v", err)
 		}
 		
 		// Устанавливаем заголовки
@@ -50,13 +50,13 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// Выполняем запрос
 		resp, err = client.Do(req)
 		if err != nil {
-			return nil, fmt.Errorf("http request error: %v", err)
+			return nil, fmt.Errorf("MyHttpPost http request error: %v", err)
 		}
 	
 		// Получаем IP из RemoteAddr
 		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
 		if resp.Request != nil && resp.Request.URL != nil {
-			fmt.Printf("Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
+			fmt.Printf("MyHttpPost Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
 		}
 		
 		return resp, nil
@@ -75,7 +75,7 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 		// Парсим URL прокси
 		proxy, err := url.Parse(proxyURL)
 		if err != nil {
-			return nil, fmt.Errorf("parse proxy URL error: %v", err)
+			return nil, fmt.Errorf("MyHttpGet parse proxy URL error: %v", err)
 		}
 		
 		// Настраиваем транспорт с прокси
@@ -94,19 +94,19 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 		// Создаем GET запрос
 		req, err := http.NewRequest("GET", urll, nil)
 		if err != nil {
-			return nil, fmt.Errorf("create request error: %v", err)
+			return nil, fmt.Errorf("MyHttpGet create request error: %v", err)
 		}
 		
 		// Выполняем запрос
 		resp, err = client.Do(req)
 		if err != nil {
-			return nil, fmt.Errorf("http request error: %v", err)
+			return nil, fmt.Errorf("MyHttpGet http request error: %v", err)
 		}
 	
 		// Получаем IP из RemoteAddr
 		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
 		if resp.Request != nil && resp.Request.URL != nil {
-			fmt.Printf("Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
+			fmt.Printf("MyHttpGet Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
 		}
 		
 		return resp, nil

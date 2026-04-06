@@ -71,6 +71,18 @@ func (srv *TgService) HandleReplyToMessage(m models.Update) error {
 		return err
 	}
 
+	if strings.HasPrefix(rm.Text, "укажите домен шорта для этого бота: ") {
+		runes := []rune(rm.Text)
+		runesStr := string(runes[len([]rune("укажите домен шорта для этого бота: ")):])
+		botId, _ := strconv.Atoi(runesStr)
+		err := srv.RM_add_short_domen_to_bot(m, botId)
+		if err != nil {
+			srv.SendMessage(fromId, ERR_MSG)
+			srv.SendMessage(fromId, err.Error())
+		}
+		return err
+	}
+
 	if rm.Text == NEW_GROUP_LINK_MSG {
 		err := srv.RM_add_group_link(m)
 		if err != nil {
@@ -427,6 +439,10 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 		srv.SendForceReply(fromId, fmt.Sprintf("укажите id канала донора для этого бота: %d", bot.Id))
 	}
 
+	if srv.Cfg.IsReplaceShortLinkDomen == 1 {
+		srv.SendForceReply(fromId, fmt.Sprintf("укажите домен шорта для этого бота: %d", bot.Id))
+	}
+
 	return nil
 }
 
@@ -462,6 +478,36 @@ func (srv *TgService) RM_add_donor_ch_to_bot(m models.Update, botId int) error {
 		return err
 	}
 	srv.SendMessage(fromId, fmt.Sprintf("канал донор %d привязанна к боту %d", chId, botId))
+
+	return nil
+}
+
+func (srv *TgService) RM_add_short_domen_to_bot(m models.Update, botId int) error {
+	replyMes := m.Message.Text
+	fromId := m.Message.From.Id
+	fromUsername := m.Message.From.UserName
+	srv.l.Info(fmt.Sprintf("RM_add_short_domen_to_bot: fromId: %d fromUsername: %s, replyMes: %s", fromId, fromUsername, replyMes))
+	
+	replyMes = strings.TrimSpace(replyMes)
+	
+	shortDomen := replyMes
+
+	bot, err := srv.db.GetBotInfoById(botId)
+	if err != nil {
+		srv.SendMessage(fromId, ERR_MSG)
+		return err
+	}
+	if bot.Id == 0 {
+		srv.SendMessage(fromId, "я не знаю такого бота !")
+		return nil
+	}
+
+	err = srv.db.EditBotShortDomenToReplace(botId, shortDomen)
+	if err != nil {
+		srv.SendMessage(fromId, ERR_MSG)
+		return err
+	}
+	srv.SendMessage(fromId, fmt.Sprintf("шорт домен %v привязан к боту %v", shortDomen, botId))
 
 	return nil
 }
