@@ -165,8 +165,9 @@ func (srv *TgService) GetUpdatesChan(conf *UpdateConfig, token string) (chan mod
 				fmt.Println(logMess)
 				updates, err := srv.GetUpdates(conf.Offset, conf.Timeout, token)
 				if err != nil {
-					srv.l.Error(fmt.Sprintf("GetUpdatesChan GetUpdates err: %v", err))
-					srv.l.Error("Failed to get updates, retrying in 4 seconds...")
+					// srv.l.Error(fmt.Sprintf("GetUpdatesChan GetUpdates err: %v", err))
+					// srv.l.Error("Failed to get updates, retrying in 4 seconds...")
+					fmt.Println("Failed to get updates, retrying in 4 seconds...")
 					time.Sleep(time.Second * 4)
 					continue
 				}
