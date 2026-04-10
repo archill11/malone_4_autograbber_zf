@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -128,6 +129,8 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 		srv.db.EditCfgVal("is-sending-now", "0")
 	}()
 
+	postUUID, _ := uuid.NewV7()
+
 	for i, vampBot := range allVampBots {
 		botRefka := vampBot.GroupLinkId
 		if srv.Cfg.IsMultiGrabber == 1 && vampBot.DonorChId != 0 && vampBot.DonorChId != channel_id {
@@ -148,6 +151,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 			zap.Any("bot index in arr", i),
 			zap.Any("arr len", len(allVampBots)),
 			zap.Any("bot ch link", vampBot.ChLink),
+			zap.Any("postUUID", postUUID),
 		)
 
 		err := srv.sendChPostAsVamp(vampBot, m)
@@ -181,6 +185,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", srv.Cfg.BotPrefix))
 	reportMess.WriteString(fmt.Sprintf("Бот: %s\n", srv.AddAt(donorBot.Username)))
 	reportMess.WriteString(fmt.Sprintf("Пост: https://t.me/c/%s/%d\n", strconv.Itoa(channel_id)[4:], message_id))
+	reportMess.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
 	reportMess.WriteString(fmt.Sprintf("Всего каналов: %d\n", len(allVampBots)))
 	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %d\n", okSend))
 	if notOkSend != 0 {

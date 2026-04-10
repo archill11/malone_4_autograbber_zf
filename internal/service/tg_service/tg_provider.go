@@ -33,7 +33,7 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// Создаем HTTP клиент с транспортом
 		client := &http.Client{
 			Transport: transport,
-			Timeout:   30 * time.Second,
+			Timeout:   90 * time.Second,
 		}
 		
 		// Создаем запрос
