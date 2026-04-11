@@ -210,10 +210,18 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	var reportMessErrorLinks bytes.Buffer
 	reportMessErrorLinks.WriteString(fmt.Sprintf("Список ошибок:\n"))
-	for i, v := range errorLinks {
-		reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %s\n", i+1, v))
-	}
 	if len(errorLinks) > 0 {
+		for i, v := range errorLinks {
+			reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %s\n", i+1, v))
+	
+			if i%15 == 0 && i > 0 {
+				err = srv.SendMessageByToken(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
+				if err != nil {
+					srv.l.Error(fmt.Sprintf("Donor_addChannelPost SendMessageByToken err: %v", err))
+				}
+				reportMessErrorLinks.Reset()
+			}
+		}
 		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
 	}
 
