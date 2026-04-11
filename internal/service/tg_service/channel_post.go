@@ -259,22 +259,22 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 	}
 	//////////////// если фото
 	if len(m.ChannelPost.Photo) > 0 {
-		err := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "photo")
+		err, errLink := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "photo")
 		return err, errLink
 	}
 	//////////////// если видео
 	if m.ChannelPost.Video != nil {
-		err := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "video")
+		err, errLink := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "video")
 		return err, errLink
 	}
 	//////////////// если гифка
 	if m.ChannelPost.Animation != nil {
-		err := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "animation")
+		err, errLink := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "animation")
 		return err, errLink
 	}
 	//////////////// если голосовое
 	if m.ChannelPost.Voice != nil {
-		err := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "voice")
+		err, errLink := srv.sendChPostAsVamp_Video_or_Photo(vampBot, m, "voice")
 		return err, errLink
 	}
 
@@ -354,6 +354,7 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		return fmt.Errorf("sendChPostAsVamp Post err: %v", err), errLink
 	}
 	defer sendVampPostResp.Body.Close()
+
 	var cAny struct {
 		models.BotErrResp
 		Result struct {
@@ -372,7 +373,7 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 
 		reportMess := bytes.Buffer{}
 		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
-		reportMess.WriteString(fmt.Sprintf("Ошибка при отправки поста в канал\n\n"))
+		reportMess.WriteString(fmt.Sprintf("Ошибка при отправке поста в канал\n\n"))
 		reportMess.WriteString(fmt.Sprintf("err: %v | %v\n\n", cAny.BotErrResp.ErrorCode, cAny.BotErrResp.Description))
 		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
 		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
@@ -388,7 +389,6 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
 			)
 		}
-
 		if sendMessageResp.Result.MessageId != 0 {
 			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
 		}
@@ -525,8 +525,11 @@ func (srv *TgService) sendChPostAsVamp_VideoNote(vampBot entity.Bot, m models.Up
 	return nil
 }
 
-func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m models.Update, postType string) error {
+func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m models.Update, postType string) (error, string) {
 	donor_ch_mes_id := m.ChannelPost.MessageId
+
+	var errLink string
+
 	futureVideoJson := map[string]string{
 		"chat_id": strconv.Itoa(vampBot.ChId),
 	}
@@ -534,7 +537,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		replToDonorChPostId := m.ChannelPost.ReplyToMessage.MessageId
 		currPost, err := srv.db.GetPostByDonorIdAndChId(replToDonorChPostId, vampBot.ChId)
 		if err != nil {
-			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo GetPostByDonorIdAndChId err: %v", err)
+			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo GetPostByDonorIdAndChId err: %v", err), errLink
 		}
 		futureVideoJson["reply_to_message_id"] = strconv.Itoa(currPost.PostId)
 	}
@@ -544,12 +547,12 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 		newInlineKeyboardMarkup, err := srv.PrepareReplyMarkup(inlineKeyboardMarkup, vampBot)
 		if err != nil {
-			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo PrepareReplyMarkup err: %v", err)
+			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo PrepareReplyMarkup err: %v", err), errLink
 		}
 		json_data, err := json.Marshal(newInlineKeyboardMarkup)
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo Marshal err", zap.Error(err), zap.Any("newInlineKeyboardMarkup", newInlineKeyboardMarkup))
-			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Marshal err: %v", err)
+			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Marshal err: %v", err), errLink
 		}
 		futureVideoJson["reply_markup"] = string(json_data)
 	}
@@ -570,7 +573,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
         }
 		newEntities, newCaption, err := srv.PrepareEntities(entities, sourceCaption, caption, vampBot)
 		if err != nil {
-			return fmt.Errorf("sendChPostAsVamp PrepareEntities err: %v", err)
+			return fmt.Errorf("sendChPostAsVamp PrepareEntities err: %v", err), errLink
 		}
 		if newEntities != nil {
 			j, _ := json.Marshal(newEntities)
@@ -606,7 +609,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 	getFileResp, err := srv.GetFile(fileId)
 	if err != nil {
-		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo GetFile fileId-%s err: %v", fileId, err)
+		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo GetFile fileId-%s err: %v", fileId, err), errLink
 	}
 	
 	fileNameDir := strings.Split(getFileResp.Result.File_path, ".")
@@ -631,7 +634,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 		err = srv.DownloadFile(fileNameInServer, tgFileUrl)
 		if err != nil {
-			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo DownloadFile err: %v", err)
+			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo DownloadFile err: %v", err), errLink
 		}
 	}
 
@@ -669,7 +672,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 	formDataContentType, body, err := files.CreateForm(futureVideoJson)
 	if err != nil {
-		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo CreateForm err: %v", err)
+		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo CreateForm err: %v", err), errLink
 	}
 
 	method := "sendVideo"
@@ -684,26 +687,54 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	url := fmt.Sprintf(srv.Cfg.TgLocEndp, vampBot.Token, method)
 	methodResp, err := srv.MyHttpPost(url, formDataContentType, body)
 	if err != nil {
-		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Post err: %v", err)
+		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Post err: %v", err), errLink
 	}
 	defer methodResp.Body.Close()
 
 	var sendMediaResp models.SendMediaResp
 	if err := json.NewDecoder(methodResp.Body).Decode(&sendMediaResp); err != nil && err != io.EOF {
-		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Decode err: %v", err)
+		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Decode err: %v", err), errLink
+	}
+	if sendMediaResp.ErrorCode != 0 {
+		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, sendMediaResp.BotErrResp.Description)
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError err", zap.Error(err))
+		}
+
+		reportMess := bytes.Buffer{}
+		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess.WriteString(fmt.Sprintf("Ошибка при отправке поста с медиа(%v) в канал\n\n", postType))
+		reportMess.WriteString(fmt.Sprintf("err: %v | %v\n\n", sendMediaResp.BotErrResp.ErrorCode, sendMediaResp.BotErrResp.Description))
+		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
+		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
+		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
+		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+
+		sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+		if err != nil {
+			srv.l.Warn("sendChPostAsVamp_Video_or_Photo SendMessageByTokenV2 err",
+				zap.Error(err),
+				zap.Any("reportMess", reportMess.String()),
+				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
+				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
+			)
+		}
+		if sendMessageResp.Result.MessageId != 0 {
+			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+		}
 	}
 
 	if sendMediaResp.Result.MessageId != 0 {
 		err = srv.db.AddNewPost(vampBot.ChId, sendMediaResp.Result.MessageId, donor_ch_mes_id, sendMediaResp.Result.Caption)
 		if err != nil {
-			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo AddNewPost err: %v", err)
+			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo AddNewPost err: %v", err), errLink
 		}
 	} else {
 		srv.l.Info(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp))
-		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp)
+		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp), errLink
 	}
 
-	return nil
+	return nil, errLink
 }
 
 func (srv *TgService) downloadPostMedia(m models.Update, postType string) (string, error) {
