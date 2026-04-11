@@ -188,36 +188,36 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	var reportMess bytes.Buffer
 	reportMess.WriteString(fmt.Sprintf("Отчет по посту:\n"))
-	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", srv.Cfg.BotPrefix))
-	reportMess.WriteString(fmt.Sprintf("Бот: %s\n", srv.AddAt(donorBot.Username)))
-	reportMess.WriteString(fmt.Sprintf("Пост: https://t.me/c/%s/%d\n", srv.Delete100(channel_id), message_id))
+	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+	reportMess.WriteString(fmt.Sprintf("Бот: %v\n", srv.AddAt(donorBot.Username)))
+	reportMess.WriteString(fmt.Sprintf("Пост: https://t.me/c/%v/%v\n", srv.Delete100(channel_id), message_id))
 	reportMess.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
-	reportMess.WriteString(fmt.Sprintf("Всего каналов: %d\n", len(allVampBots)))
-	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %d\n", okSend))
+	reportMess.WriteString(fmt.Sprintf("Всего каналов: %v\n", len(allVampBots)))
+	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %v\n", okSend))
 	if notOkSend != 0 {
-		reportMess.WriteString(fmt.Sprintf("Неуспешно: %d\n", notOkSend))
+		reportMess.WriteString(fmt.Sprintf("Неуспешно: %v\n", notOkSend))
 	}
 	if ChId0 != 0 {
-		reportMess.WriteString(fmt.Sprintf("Без подвяз. канала: %d\n", ChId0))
+		reportMess.WriteString(fmt.Sprintf("Без подвяз. канала: %v\n", ChId0))
 	}
 	if IsDisable != 0 {
-		reportMess.WriteString(fmt.Sprintf("Отключены от рассылки: %d\n", IsDisable))
-	}
-	srv.SendMessage(channel_id, reportMess.String())
-	if srv.Cfg.BotPrefix != "_test"  { // стата в общий канал
-		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMess.String(), srv.Cfg.BotTokenForStat)
+		reportMess.WriteString(fmt.Sprintf("Отключены от рассылки: %v\n", IsDisable))
 	}
 
 	var reportMessErrorLinks bytes.Buffer
 	reportMessErrorLinks.WriteString(fmt.Sprintf("Список ошибок:\n"))
 	if len(errorLinks) > 0 {
 		for i, v := range errorLinks {
-			reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %s\n", i+1, v))
+			reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %v\n", i+1, v))
 	
 			if i%15 == 0 && i > 0 {
-				err = srv.SendMessageByToken(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
+				sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
 				if err != nil {
 					srv.l.Error(fmt.Sprintf("Donor_addChannelPost SendMessageByToken err: %v", err))
+				}
+				if sendMessageResp.Result.MessageId != 0 {
+					errLinks := fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+					reportMess.WriteString(fmt.Sprintf("Список Ошибок: %v\n", errLinks))
 				}
 				reportMessErrorLinks.Reset()
 			}
@@ -225,13 +225,18 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
 	}
 
+	srv.SendMessage(channel_id, reportMess.String())
+	if srv.Cfg.BotPrefix != "_test"  { // стата в общий канал
+		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMess.String(), srv.Cfg.BotTokenForStat)
+	}
+
 	var reportMess2 bytes.Buffer
 	for key, val := range refkiMap {
 		grLinkName, _ := srv.db.GetGroupLinkById(key)
 
-		reportMess2.WriteString(fmt.Sprintf("Реф: %s\n", grLinkName.Title))
+		reportMess2.WriteString(fmt.Sprintf("Реф: %v\n", grLinkName.Title))
 		for k, v := range val {
-			reportMess2.WriteString(fmt.Sprintf("%s: %d\n", k, v))
+			reportMess2.WriteString(fmt.Sprintf("%v: %v\n", k, v))
 		}
 		reportMess2.WriteString("\n")
 	}
