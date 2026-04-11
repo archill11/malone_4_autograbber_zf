@@ -216,7 +216,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 					srv.l.Error(fmt.Sprintf("Donor_addChannelPost SendMessageByToken err: %v", err))
 				}
 				if sendMessageResp.Result.MessageId != 0 {
-					errLinks := fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+					errLinks := fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStat), sendMessageResp.Result.MessageId)
 					reportMess.WriteString(fmt.Sprintf("Список Ошибок: %v\n", errLinks))
 				}
 				reportMessErrorLinks.Reset()
