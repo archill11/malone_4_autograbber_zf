@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"myapp/internal/models"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -24,10 +25,22 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		}
 		
 		// Настраиваем транспорт с прокси
+		// transport := &http.Transport{
+		// 	Proxy: http.ProxyURL(proxy),
+		// 	MaxIdleConns:    100,
+		// 	IdleConnTimeout: 90 * time.Second,
+		// }
+
 		transport := &http.Transport{
 			Proxy: http.ProxyURL(proxy),
-			MaxIdleConns:    100,
-			IdleConnTimeout: 90 * time.Second,
+			DialContext: (&net.Dialer{
+				Timeout:   10 * time.Second,
+				KeepAlive: 0,
+			}).DialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 15 * time.Second,
+			DisableKeepAlives:  true,
+			MaxIdleConns:       0,
 		}
 		
 		// Создаем HTTP клиент с транспортом
@@ -79,10 +92,22 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 		}
 		
 		// Настраиваем транспорт с прокси
+		// transport := &http.Transport{
+		// 	Proxy: http.ProxyURL(proxy),
+		// 	MaxIdleConns:    100,
+		// 	IdleConnTimeout: 90 * time.Second,
+		// }
+
 		transport := &http.Transport{
 			Proxy: http.ProxyURL(proxy),
-			MaxIdleConns:    100,
-			IdleConnTimeout: 90 * time.Second,
+			DialContext: (&net.Dialer{
+				Timeout:   10 * time.Second,
+				KeepAlive: 0,
+			}).DialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 15 * time.Second,
+			DisableKeepAlives:  true,
+			MaxIdleConns:       0,
 		}
 		
 		// Создаем HTTP клиент
