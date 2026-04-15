@@ -687,6 +687,33 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	url := fmt.Sprintf(srv.Cfg.TgLocEndp, vampBot.Token, method)
 	methodResp, err := srv.MyHttpPost(url, formDataContentType, body)
 	if err != nil {
+		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
+		if err != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError err", zap.Error(err))
+		}
+
+		reportMess := bytes.Buffer{}
+		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess.WriteString(fmt.Sprintf("Ошибка при попытке отправки поста с медиа(%v) в канал\n\n", postType))
+		reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
+		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
+		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
+		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
+		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+
+		sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+		if err != nil {
+			srv.l.Warn("sendChPostAsVamp_Video_or_Photo SendMessageByTokenV2 err",
+				zap.Error(err),
+				zap.Any("reportMess", reportMess.String()),
+				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
+				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
+			)
+		}
+		if sendMessageResp.Result.MessageId != 0 {
+			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+		}
+
 		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Post err: %v", err), errLink
 	}
 	defer methodResp.Body.Close()
