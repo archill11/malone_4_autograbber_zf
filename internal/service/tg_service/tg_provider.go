@@ -17,6 +17,13 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 	// Данные прокси
 	proxyURL := srv.Cfg.ProxyStr
 
+	defer func() {
+		if r := recover(); r != nil {
+			srv.l.Error(fmt.Sprintf("Panic recovered: %v", r))
+			// здесь можно выполнить cleanup или перезапустить сервис
+		}
+	}()
+
 	if srv.Cfg.IsUseProxy == 1 && proxyURL != "" {
 		// Парсим URL прокси
 		proxy, err := url.Parse(proxyURL)
@@ -35,7 +42,6 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			Proxy: http.ProxyURL(proxy),
 			DialContext: (&net.Dialer{
 				Timeout:   10 * time.Second,
-				KeepAlive: 0,
 			}).DialContext,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ResponseHeaderTimeout: 15 * time.Second,
@@ -84,6 +90,13 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 	// Данные прокси
 	proxyURL := srv.Cfg.ProxyStr
 
+	defer func() {
+		if r := recover(); r != nil {
+			srv.l.Error(fmt.Sprintf("Panic recovered: %v", r))
+			// здесь можно выполнить cleanup или перезапустить сервис
+		}
+	}()
+
 	if srv.Cfg.IsUseProxy == 1 && proxyURL != "" {
 		// Парсим URL прокси
 		proxy, err := url.Parse(proxyURL)
@@ -102,7 +115,6 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 			Proxy: http.ProxyURL(proxy),
 			DialContext: (&net.Dialer{
 				Timeout:   10 * time.Second,
-				KeepAlive: 0,
 			}).DialContext,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ResponseHeaderTimeout: 15 * time.Second,
