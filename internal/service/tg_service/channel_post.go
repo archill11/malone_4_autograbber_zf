@@ -697,6 +697,13 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 	srv.l.Info("call fileNameInServerafter all", zap.Any("fileNameInServer", fileNameInServer))
 
+	defer func() {
+		if r := recover(); r != nil {
+			srv.l.Error(fmt.Sprintf("Panic recovered: %v", r))
+			// здесь можно выполнить cleanup или перезапустить сервис
+		}
+	}()
+
 	formDataContentType, body, err := files.CreateForm(futureVideoJson)
 	if err != nil {
 		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo CreateForm err: %v", err), errLink
