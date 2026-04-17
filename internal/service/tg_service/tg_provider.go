@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader) (resp *http.Response, err error) {
@@ -53,34 +55,47 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			Transport: transport,
 			Timeout:   90 * time.Second,
 		}
+
+		srv.l.Info("MyHttpPost NewRequestafter POST", zap.Any("urll", urll), zap.Any("body", body), zap.Any("client", client))
 		
 		// Создаем запрос
 		req, err := http.NewRequest("POST", urll, body)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost create request error: %v", err)
 		}
+
+		srv.l.Info("MyHttpPost NewRequestafter POST after", zap.Any("req", req))
 		
 		// Устанавливаем заголовки
 		if contentType != "" {
+			srv.l.Info("MyHttpPost NewRequestafter POST after contentType != ''", zap.Any("req", req), zap.Any("contentType", contentType), zap.Any("req is nil", req == nil))
 			req.Header.Set("Content-Type", contentType)
 		}
+
+		srv.l.Info("MyHttpPost NewRequestafter Do", zap.Any("req", req))
 		
 		// Выполняем запрос
 		resp, err = client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost http request error: %v", err)
 		}
+
+		srv.l.Info("MyHttpPost NewRequestafter Do after", zap.Any("resp", resp), zap.Any("resp is nil", resp == nil))
 	
 		// Получаем IP из RemoteAddr
 		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
-		if resp.Request != nil && resp.Request.URL != nil {
+		if resp.Request != nil && resp.Request.Host != "" {
 			fmt.Printf("MyHttpPost Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
+			srv.l.Info("MyHttpPost Запрос отправлен через прокси", zap.Any("resp.Request.URL.Host", resp.Request.URL.Host))
 		}
 		
 		return resp, nil
 	}
 
+	srv.l.Info("MyHttpPost http.Post")
+	
 	resp, err = http.Post(urll, contentType, body)
+	srv.l.Info("MyHttpPost http.Post after", zap.Any("resp", resp), zap.Any("err", err))
 
 	return resp, err
 }

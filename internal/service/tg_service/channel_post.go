@@ -350,11 +350,14 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		"application/json",
 		bytes.NewBuffer(json_data),
 	)
+	srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after",)
 	if err != nil {
+		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil", zap.Error(err))
 		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp AddNewTgError err", zap.Error(err))
 		}
+		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil after AddNewTgError", zap.Error(err))
 
 		reportMess := bytes.Buffer{}
 		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
@@ -381,6 +384,8 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		return fmt.Errorf("sendChPostAsVamp Post err: %v", err), errLink
 	}
 	defer sendVampPostResp.Body.Close()
+
+	srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after defer sendVampPostResp.Body.Close()",)
 
 	var cAny struct {
 		models.BotErrResp
