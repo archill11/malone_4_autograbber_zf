@@ -353,9 +353,9 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 	srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after",)
 	if err != nil {
 		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil", zap.Error(err))
-		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
-		if err != nil {
-			srv.l.Error("sendChPostAsVamp AddNewTgError err", zap.Error(err))
+		dbErr := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
+		if dbErr != nil {
+			srv.l.Error("sendChPostAsVamp AddNewTgError dbErr", zap.Error(dbErr))
 		}
 		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil after AddNewTgError", zap.Error(err))
 
@@ -368,10 +368,10 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
 
-		sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-		if err != nil {
-			srv.l.Warn("sendChPostAsVamp SendMessageByTokenV2 err",
-				zap.Error(err),
+		sendMessageResp, err2 := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+		if err2 != nil {
+			srv.l.Warn("sendChPostAsVamp SendMessageByTokenV2 err2",
+				zap.Error(err2),
 				zap.Any("reportMess", reportMess.String()),
 				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
 				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
@@ -398,9 +398,9 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		return fmt.Errorf("sendChPostAsVamp Decode err: %v", err), errLink
 	}
 	if cAny.ErrorCode != 0 {
-		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, cAny.BotErrResp.Description)
-		if err != nil {
-			srv.l.Error("sendChPostAsVamp AddNewTgError err", zap.Error(err))
+		dbErr := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, cAny.BotErrResp.Description)
+		if dbErr != nil {
+			srv.l.Error("sendChPostAsVamp AddNewTgError dbErr", zap.Error(dbErr))
 		}
 
 		reportMess := bytes.Buffer{}
@@ -726,9 +726,9 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	url := fmt.Sprintf(srv.Cfg.TgLocEndp, vampBot.Token, method)
 	methodResp, err := srv.MyHttpPost(url, formDataContentType, body)
 	if err != nil {
-		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
-		if err != nil {
-			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError err", zap.Error(err))
+		dbErr := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
+		if dbErr != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError dbErr", zap.Error(dbErr))
 		}
 
 		reportMess := bytes.Buffer{}
@@ -740,10 +740,10 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
 
-		sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-		if err != nil {
+		sendMessageResp, err2 := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
+		if err2 != nil {
 			srv.l.Warn("sendChPostAsVamp_Video_or_Photo SendMessageByTokenV2 err",
-				zap.Error(err),
+				zap.Error(err2),
 				zap.Any("reportMess", reportMess.String()),
 				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
 				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
@@ -762,9 +762,9 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Decode err: %v", err), errLink
 	}
 	if sendMediaResp.ErrorCode != 0 {
-		err := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, sendMediaResp.BotErrResp.Description)
-		if err != nil {
-			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError err", zap.Error(err))
+		dbErr := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, sendMediaResp.BotErrResp.Description)
+		if dbErr != nil {
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError dbErr", zap.Error(dbErr))
 		}
 
 		reportMess := bytes.Buffer{}
@@ -791,9 +791,9 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	}
 
 	if sendMediaResp.Result.MessageId != 0 {
-		err = srv.db.AddNewPost(vampBot.ChId, sendMediaResp.Result.MessageId, donor_ch_mes_id, sendMediaResp.Result.Caption)
-		if err != nil {
-			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo AddNewPost err: %v", err), errLink
+		dbErr := srv.db.AddNewPost(vampBot.ChId, sendMediaResp.Result.MessageId, donor_ch_mes_id, sendMediaResp.Result.Caption)
+		if dbErr != nil {
+			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo AddNewPost dbErr: %v", dbErr), errLink
 		}
 	} else {
 		srv.l.Info(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp))

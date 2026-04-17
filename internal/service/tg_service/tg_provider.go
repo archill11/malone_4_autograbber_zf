@@ -49,7 +49,7 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			TLSHandshakeTimeout:   10 * time.Second,
 			ResponseHeaderTimeout: 15 * time.Second,
 			DisableKeepAlives:  true,
-			// MaxIdleConns:       0,
+			MaxIdleConns:       0,
 		}
 		
 		// Создаем HTTP клиент с транспортом
@@ -58,9 +58,9 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			Timeout:   90 * time.Second,
 		}
 
-		if !strings.Contains(urll, "getUpdates") {
-			srv.l.Info("MyHttpPost NewRequestafter POST", zap.Any("urll", urll), zap.Any("body", body), zap.Any("client", client))
-		}
+		// if !strings.Contains(urll, "getUpdates") {
+		// 	srv.l.Info("MyHttpPost NewRequestafter POST", zap.Any("urll", urll), zap.Any("body", body), zap.Any("client", client))
+		// }
 		
 		// Создаем запрос
 		req, err := http.NewRequest("POST", urll, body)
@@ -68,21 +68,21 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			return nil, fmt.Errorf("MyHttpPost create request error: %v", err)
 		}
 
-		if !strings.Contains(urll, "getUpdates") {
-			srv.l.Info("MyHttpPost NewRequestafter POST after", zap.Any("req", req))
-		}
+		// if !strings.Contains(urll, "getUpdates") {
+		// 	srv.l.Info("MyHttpPost NewRequestafter POST after", zap.Any("req", req))
+		// }
 		
 		// Устанавливаем заголовки
 		if contentType != "" {
-			if !strings.Contains(urll, "getUpdates") {
-				srv.l.Info("MyHttpPost NewRequestafter POST after contentType != ''", zap.Any("req", req), zap.Any("contentType", contentType), zap.Any("req is nil", req == nil))
-			}
+			// if !strings.Contains(urll, "getUpdates") {
+			// 	srv.l.Info("MyHttpPost NewRequestafter POST after contentType != ''", zap.Any("req", req), zap.Any("contentType", contentType), zap.Any("req is nil", req == nil))
+			// }
 			req.Header.Set("Content-Type", contentType)
 		}
 
-		if !strings.Contains(urll, "getUpdates") {
-			srv.l.Info("MyHttpPost NewRequestafter Do", zap.Any("req", req))
-		}
+		// if !strings.Contains(urll, "getUpdates") {
+		// 	srv.l.Info("MyHttpPost NewRequestafter Do", zap.Any("req", req))
+		// }
 		
 		// Выполняем запрос
 		resp, err = client.Do(req)
@@ -96,12 +96,12 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 	
 		// Получаем IP из RemoteAddr
 		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
-		if resp.Request != nil && resp.Request.Host != "" {
-			fmt.Printf("MyHttpPost Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
-			if !strings.Contains(urll, "getUpdates") {
-				srv.l.Info("MyHttpPost Запрос отправлен через прокси", zap.Any("resp.Request.URL.Host", resp.Request.URL.Host))
-			}
-		}
+		// if resp.Request != nil && resp.Request.Host != "" {
+		// 	fmt.Printf("MyHttpPost Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
+		// 	if !strings.Contains(urll, "getUpdates") {
+		// 		srv.l.Info("MyHttpPost Запрос отправлен через прокси", zap.Any("resp.Request.URL.Host", resp.Request.URL.Host))
+		// 	}
+		// }
 		
 		return resp, nil
 	}
@@ -137,22 +137,22 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 		}
 		
 		// Настраиваем транспорт с прокси
-		transport := &http.Transport{
-			Proxy: http.ProxyURL(proxy),
-			// MaxIdleConns:    100,
-			// IdleConnTimeout: 90 * time.Second,
-		}
-
 		// transport := &http.Transport{
 		// 	Proxy: http.ProxyURL(proxy),
-		// 	DialContext: (&net.Dialer{
-		// 		Timeout:   10 * time.Second,
-		// 	}).DialContext,
-		// 	TLSHandshakeTimeout:   10 * time.Second,
-		// 	ResponseHeaderTimeout: 15 * time.Second,
-		// 	DisableKeepAlives:  true,
-		// 	MaxIdleConns:       0,
+		// 	// MaxIdleConns:    100,
+		// 	// IdleConnTimeout: 90 * time.Second,
 		// }
+
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxy),
+			DialContext: (&net.Dialer{
+				Timeout:   10 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 15 * time.Second,
+			DisableKeepAlives:  true,
+			MaxIdleConns:       0,
+		}
 		
 		// Создаем HTTP клиент
 		client := &http.Client{
