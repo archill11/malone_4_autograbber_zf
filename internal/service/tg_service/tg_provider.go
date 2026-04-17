@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"myapp/internal/models"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -33,22 +34,22 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		}
 		
 		// Настраиваем транспорт с прокси
-		transport := &http.Transport{
-			Proxy: http.ProxyURL(proxy),
-			// MaxIdleConns:    100,
-			// IdleConnTimeout: 90 * time.Second,
-		}
-
 		// transport := &http.Transport{
 		// 	Proxy: http.ProxyURL(proxy),
-		// 	DialContext: (&net.Dialer{
-		// 		Timeout:   10 * time.Second,
-		// 	}).DialContext,
-		// 	TLSHandshakeTimeout:   10 * time.Second,
-		// 	ResponseHeaderTimeout: 15 * time.Second,
-		// 	DisableKeepAlives:  true,
-		// 	MaxIdleConns:       0,
+		// 	// MaxIdleConns:    100,
+		// 	// IdleConnTimeout: 90 * time.Second,
 		// }
+
+		transport := &http.Transport{
+			Proxy: http.ProxyURL(proxy),
+			DialContext: (&net.Dialer{
+				Timeout:   10 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 15 * time.Second,
+			DisableKeepAlives:  true,
+			// MaxIdleConns:       0,
+		}
 		
 		// Создаем HTTP клиент с транспортом
 		client := &http.Client{
