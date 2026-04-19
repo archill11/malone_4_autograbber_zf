@@ -315,7 +315,7 @@ func (srv *TgService) PrepareEntities(
 					srv.l.Error(err.Error())
 	
 					reportMess := bytes.Buffer{}
-					reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+					reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 					reportMess.WriteString(fmt.Sprintf("Ошибка при создании короткой уникальной ссылки\n\n"))
 					reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
 					reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
@@ -376,7 +376,7 @@ func (srv *TgService) PrepareEntities(
 					srv.l.Error(err.Error())
 
 					reportMess := bytes.Buffer{}
-					reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+					reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 					reportMess.WriteString(fmt.Sprintf("Ошибка при создании короткой уникальной ссылки\n\n"))
 					reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
 					reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))

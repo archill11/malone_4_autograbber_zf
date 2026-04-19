@@ -410,13 +410,13 @@ func (srv *TgService) AlertScamBots() {
 				srv.SendMessage(donorBot.ChId, errMess)
 				var logBotMess bytes.Buffer
 				logBotMess.WriteString("удален бот\n")
-				logBotMess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", srv.Cfg.BotPrefix))
-				logBotMess.WriteString(fmt.Sprintf("%s\n", srv.AddAt(bot.Username)))
-				logBotMess.WriteString(fmt.Sprintf("%s\n", bot.Token))
-				logBotMess.WriteString(fmt.Sprintf("%s\n", bot.ChLink))
+				logBotMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
+				logBotMess.WriteString(fmt.Sprintf("%v\n", srv.AddAt(bot.Username)))
+				logBotMess.WriteString(fmt.Sprintf("%v\n", bot.Token))
+				logBotMess.WriteString(fmt.Sprintf("%v\n", bot.ChLink))
 				logBotMess.WriteString(fmt.Sprintf("%d\n", bot.ChId))
 				grLink, _ := srv.db.GetGroupLinkById(bot.GroupLinkId)
-				logBotMess.WriteString(fmt.Sprintf("group_link: %d, %s - %s\n", bot.GroupLinkId, grLink.Title, grLink.Link))
+				logBotMess.WriteString(fmt.Sprintf("group_link: %d, %v - %v\n", bot.GroupLinkId, grLink.Title, grLink.Link))
 				srv.SendMessage(donorBot.ChId, logBotMess.String())
 				if srv.Cfg.BotPrefix != "_test"  { // стата в общий канал
 					srv.SendMessageByToken(srv.Cfg.ChForStat, logBotMess.String(), srv.Cfg.BotTokenForStat)
@@ -426,9 +426,9 @@ func (srv *TgService) AlertScamBots() {
 			if strings.Contains(resp.Result.Description, "this account as a scam or a fake") {
 				var mess bytes.Buffer
 				mess.WriteString("обнаружен скам на канале\n")
-				mess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", srv.Cfg.BotPrefix))
-				mess.WriteString(fmt.Sprintf("бот: @%s | %s\n", bot.Username, bot.Token))
-				mess.WriteString(fmt.Sprintf("канал: %s | %d\n", bot.ChLink, bot.ChId))
+				mess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
+				mess.WriteString(fmt.Sprintf("бот: @%v | %v\n", bot.Username, bot.Token))
+				mess.WriteString(fmt.Sprintf("канал: %v | %v\n", bot.ChLink, bot.ChId))
 				logMess := mess.String()
 
 				srv.SendMessage(donorBot.ChId, logMess)

@@ -188,7 +188,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	var reportMess bytes.Buffer
 	reportMess.WriteString(fmt.Sprintf("Отчет по посту:\n"))
-	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 	reportMess.WriteString(fmt.Sprintf("Бот: %v\n", srv.AddAt(donorBot.Username)))
 	reportMess.WriteString(fmt.Sprintf("Пост: %v\n", srv.CreateChPostLink(channel_id, message_id)))
 	reportMess.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
@@ -205,7 +205,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	}
 
 	var reportMessErrorLinks bytes.Buffer
-	reportMessErrorLinks.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+	reportMessErrorLinks.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 	reportMessErrorLinks.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
 	reportMessErrorLinks.WriteString(fmt.Sprintf("Список ошибок:\n"))
 	if len(errorLinks) > 0 {
@@ -234,7 +234,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	var reportMess2 bytes.Buffer
 	if len(refkiMap) > 0 {
-		reportMess2.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess2.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 		reportMess2.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
 	}
 	for key, val := range refkiMap {
@@ -364,7 +364,7 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil after AddNewTgError", zap.Error(err))
 
 		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 		reportMess.WriteString(fmt.Sprintf("Ошибка при попытке отправки поста в канал\n\n"))
 		reportMess.WriteString(fmt.Sprintf("err: %v \n\n", err.Error()))
 		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
@@ -408,7 +408,7 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 		}
 
 		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 		reportMess.WriteString(fmt.Sprintf("Ошибка при отправке поста в канал\n\n"))
 		reportMess.WriteString(fmt.Sprintf("err: %v | %v\n\n", cAny.BotErrResp.ErrorCode, cAny.BotErrResp.Description))
 		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
@@ -736,7 +736,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		}
 
 		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 		reportMess.WriteString(fmt.Sprintf("Ошибка при попытке отправки поста с медиа(%v) в канал\n\n", postType))
 		reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
 		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
@@ -772,7 +772,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		}
 
 		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
 		reportMess.WriteString(fmt.Sprintf("Ошибка при отправке поста с медиа(%v) в канал\n\n", postType))
 		reportMess.WriteString(fmt.Sprintf("err: %v | %v\n\n", sendMediaResp.BotErrResp.ErrorCode, sendMediaResp.BotErrResp.Description))
 		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
@@ -1179,7 +1179,7 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 
 	var reportMess bytes.Buffer
 	reportMess.WriteString(fmt.Sprintf("Отчет по медиа-груп:\n"))
-	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", s.Cfg.BotPrefix))
+	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", s.CreateCodeFmt(s.Cfg.BotPrefix)))
 	reportMess.WriteString(fmt.Sprintf("Всего ботов: %d\n", len(allVampBots)))
 	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %d\n", okSend))
 	if notOkSend != 0 {
