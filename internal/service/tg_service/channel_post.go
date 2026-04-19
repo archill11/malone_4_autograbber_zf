@@ -190,8 +190,8 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	reportMess.WriteString(fmt.Sprintf("Отчет по посту:\n"))
 	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
 	reportMess.WriteString(fmt.Sprintf("Бот: %v\n", srv.AddAt(donorBot.Username)))
-	reportMess.WriteString(fmt.Sprintf("Пост: https://t.me/c/%v/%v\n", srv.Delete100(channel_id), message_id))
-	reportMess.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
+	reportMess.WriteString(fmt.Sprintf("Пост: %v\n", srv.CreateChPostLink(channel_id, message_id)))
+	reportMess.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
 	reportMess.WriteString(fmt.Sprintf("Всего каналов: %v\n", len(allVampBots)))
 	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %v\n", okSend))
 	if notOkSend != 0 {
@@ -206,19 +206,19 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	var reportMessErrorLinks bytes.Buffer
 	reportMessErrorLinks.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
-	reportMessErrorLinks.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
+	reportMessErrorLinks.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
 	reportMessErrorLinks.WriteString(fmt.Sprintf("Список ошибок:\n"))
 	if len(errorLinks) > 0 {
-		for i, v := range errorLinks {
-			reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %v\n", i+1, v))
+		for i, errLink := range errorLinks {
+			reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %v\n", i+1, errLink))
 	
-			if i%15 == 0 && i > 0 {
+			if i%20 == 0 && i > 0 {
 				sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
 				if err != nil {
 					srv.l.Error(fmt.Sprintf("Donor_addChannelPost SendMessageByToken err: %v", err))
 				}
 				if sendMessageResp.Result.MessageId != 0 {
-					errLinks := fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStat), sendMessageResp.Result.MessageId)
+					errLinks := srv.CreateChPostLink(srv.Cfg.ChForStat, sendMessageResp.Result.MessageId)
 					reportMess.WriteString(fmt.Sprintf("Список Ошибок: %v\n", errLinks))
 				}
 				reportMessErrorLinks.Reset()
@@ -235,7 +235,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	var reportMess2 bytes.Buffer
 	if len(refkiMap) > 0 {
 		reportMess2.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
-		reportMess2.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
+		reportMess2.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
 	}
 	for key, val := range refkiMap {
 		grLinkName, _ := srv.db.GetGroupLinkById(key)
@@ -382,7 +382,7 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 			)
 		}
 		if sendMessageResp.Result.MessageId != 0 {
-			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
 		}
 
 		return fmt.Errorf("sendChPostAsVamp Post err: %v", err), errLink
@@ -426,7 +426,7 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 			)
 		}
 		if sendMessageResp.Result.MessageId != 0 {
-			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
 		}
 
 
@@ -754,7 +754,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			)
 		}
 		if sendMessageResp.Result.MessageId != 0 {
-			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
 		}
 
 		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Post err: %v", err), errLink
@@ -790,7 +790,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			)
 		}
 		if sendMessageResp.Result.MessageId != 0 {
-			errLink = fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(srv.Cfg.ChForStatErrors), sendMessageResp.Result.MessageId)
+			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
 		}
 	}
 

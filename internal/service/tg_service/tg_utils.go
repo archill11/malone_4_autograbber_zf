@@ -14,6 +14,14 @@ import (
 	"go.uber.org/zap"
 )
 
+func (srv *TgService) CreateCodeFmt(text string) string {
+	return fmt.Sprintf("<code>%v</code>", text)
+}
+
+func (srv *TgService) CreateChPostLink(ch_id int, message_id int) string {
+	return fmt.Sprintf("https://t.me/c/%v/%v", srv.Delete100(ch_id), message_id)
+}
+
 func (srv *TgService) ChInfoToLinkHTML(link, title string) string {
 	if strings.HasPrefix(link, "@") {
 		link = fmt.Sprintf("https://t.me/%s", link)
