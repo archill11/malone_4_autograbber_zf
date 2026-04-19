@@ -10,10 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader) (resp *http.Response, err error) {
@@ -90,9 +87,9 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			return nil, fmt.Errorf("MyHttpPost http request error: %v", err)
 		}
 
-		if !strings.Contains(urll, "getUpdates") {
-			srv.l.Info("MyHttpPost NewRequestafter Do after", zap.Any("resp", resp), zap.Any("resp is nil", resp == nil))
-		}
+		// if !strings.Contains(urll, "getUpdates") {
+		// 	srv.l.Info("MyHttpPost NewRequestafter Do after", zap.Any("resp", resp), zap.Any("resp is nil", resp == nil))
+		// }
 	
 		// Получаем IP из RemoteAddr
 		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
@@ -106,14 +103,14 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		return resp, nil
 	}
 
-	if !strings.Contains(urll, "getUpdates") {
-		srv.l.Info("MyHttpPost http.Post")
-	}
+	// if !strings.Contains(urll, "getUpdates") {
+	// 	srv.l.Info("MyHttpPost http.Post")
+	// }
 	
 	resp, err = http.Post(urll, contentType, body)
-	if !strings.Contains(urll, "getUpdates") {
-		srv.l.Info("MyHttpPost http.Post after", zap.Any("resp", resp), zap.Any("err", err))
-	}
+	// if !strings.Contains(urll, "getUpdates") {
+	// 	srv.l.Info("MyHttpPost http.Post after", zap.Any("resp", resp), zap.Any("err", err))
+	// }
 
 	return resp, err
 }
