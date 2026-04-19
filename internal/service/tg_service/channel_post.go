@@ -675,7 +675,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	}
 
 	if postType == "video" && srv.Cfg.IsChangeMediaMetadata == 1 {
-		srv.l.Info("call RandomizeMP4Metadata")
+		srv.l.Info("sendChPostAsVamp_Video_or_Photo call RandomizeMP4Metadata")
 		err := RandomizeMP4Metadata(fileNameInServer, fileNameInServer)
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo RandomizeMP4Metadata err", zap.Error(err))
@@ -683,7 +683,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	}
 
 	if postType == "photo" && srv.Cfg.IsUniqueImage == 1 {
-		srv.l.Info("call UniqueProcessImageFile")
+		srv.l.Info("sendChPostAsVamp_Video_or_Photo call UniqueProcessImageFile")
 		err := UniqueProcessImageFile(fileNameInServer, fileNameInServerAugmented)
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessImageFile err", zap.Error(err))
@@ -693,7 +693,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	}
 
 	if postType == "video" && srv.Cfg.IsUniqueVideo == 1 {
-		srv.l.Info("call UniqueProcessVideoFile")
+		srv.l.Info("sendChPostAsVamp_Video_or_Photo call UniqueProcessVideoFile")
 		err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, false)
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessVideoFile err", zap.Error(err))
@@ -704,7 +704,7 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 	futureVideoJson[postType] = fmt.Sprintf("@%s", fileNameInServer)
 
-	srv.l.Info("call fileNameInServerafter all", zap.Any("fileNameInServer", fileNameInServer))
+	srv.l.Info("sendChPostAsVamp_Video_or_Photo call fileNameInServerafter all", zap.Any("fileNameInServer", fileNameInServer))
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -955,7 +955,7 @@ func (srv *TgService) sendAndDeleteMediaV2(
 	}
 
 	if postType == "photo" && srv.Cfg.IsUniqueImage == 1 {
-		srv.l.Info("call UniqueProcessImageFile")
+		srv.l.Info("sendAndDeleteMediaV2 call UniqueProcessImageFile")
 		err := UniqueProcessImageFile(fileNameInServer, fileNameInServerAugmented)
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessImageFile err", zap.Error(err))
@@ -965,7 +965,7 @@ func (srv *TgService) sendAndDeleteMediaV2(
 	}
 
 	if postType == "video" && srv.Cfg.IsUniqueVideo == 1 {
-		srv.l.Info("call UniqueProcessVideoFile")
+		srv.l.Info("sendAndDeleteMediaV2 call UniqueProcessVideoFile")
 		err := UniqueProcessVideoFile(fileNameInServer, fileNameInServerAugmented, false)
 		if err != nil {
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo UniqueProcessVideoFile err", zap.Error(err))
