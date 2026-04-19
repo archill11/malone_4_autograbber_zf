@@ -231,6 +231,10 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	}
 
 	var reportMess2 bytes.Buffer
+	if len(refkiMap) > 0 {
+		reportMess2.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+		reportMess2.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
+	}
 	for key, val := range refkiMap {
 		grLinkName, _ := srv.db.GetGroupLinkById(key)
 
