@@ -205,6 +205,8 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	}
 
 	var reportMessErrorLinks bytes.Buffer
+	reportMessErrorLinks.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.Cfg.BotPrefix))
+	reportMessErrorLinks.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", postUUID))
 	reportMessErrorLinks.WriteString(fmt.Sprintf("Список ошибок:\n"))
 	if len(errorLinks) > 0 {
 		for i, v := range errorLinks {
