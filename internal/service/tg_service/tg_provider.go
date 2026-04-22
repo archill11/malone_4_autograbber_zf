@@ -14,7 +14,6 @@ import (
 )
 
 func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader) (resp *http.Response, err error) {
-	// Данные прокси
 	proxyURL := srv.Cfg.ProxyStr
 
 	defer func() {
@@ -25,13 +24,11 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 	}()
 
 	if srv.Cfg.IsUseProxy == 1 && proxyURL != "" {
-		// Парсим URL прокси
 		proxy, err := url.Parse(proxyURL)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost parse proxy URL error: %v", err)
 		}
 		
-		// Настраиваем транспорт с прокси
 		// transport := &http.Transport{
 		// 	Proxy: http.ProxyURL(proxy),
 		// 	// MaxIdleConns:    100,
@@ -49,7 +46,6 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			MaxIdleConns:       0,
 		}
 		
-		// Создаем HTTP клиент с транспортом
 		client := &http.Client{
 			Transport: transport,
 			Timeout:   90 * time.Second,
@@ -59,7 +55,6 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// 	srv.l.Info("MyHttpPost NewRequestafter POST", zap.Any("urll", urll), zap.Any("body", body), zap.Any("client", client))
 		// }
 		
-		// Создаем запрос
 		req, err := http.NewRequest("POST", urll, body)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost create request error: %v", err)
@@ -69,7 +64,6 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// 	srv.l.Info("MyHttpPost NewRequestafter POST after", zap.Any("req", req))
 		// }
 		
-		// Устанавливаем заголовки
 		if contentType != "" {
 			// if !strings.Contains(urll, "getUpdates") {
 			// 	srv.l.Info("MyHttpPost NewRequestafter POST after contentType != ''", zap.Any("req", req), zap.Any("contentType", contentType), zap.Any("req is nil", req == nil))
@@ -81,7 +75,6 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// 	srv.l.Info("MyHttpPost NewRequestafter Do", zap.Any("req", req))
 		// }
 		
-		// Выполняем запрос
 		resp, err = client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost http request error: %v", err)
@@ -91,15 +84,7 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 		// 	srv.l.Info("MyHttpPost NewRequestafter Do after", zap.Any("resp", resp), zap.Any("resp is nil", resp == nil))
 		// }
 	
-		// Получаем IP из RemoteAddr
-		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
-		// if resp.Request != nil && resp.Request.Host != "" {
-		// 	fmt.Printf("MyHttpPost Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
-		// 	if !strings.Contains(urll, "getUpdates") {
-		// 		srv.l.Info("MyHttpPost Запрос отправлен через прокси", zap.Any("resp.Request.URL.Host", resp.Request.URL.Host))
-		// 	}
-		// }
-		
+
 		return resp, nil
 	}
 
@@ -116,18 +101,9 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 }
 
 func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
-	// Данные прокси
 	proxyURL := srv.Cfg.ProxyStr
 
-	defer func() {
-		if r := recover(); r != nil {
-			srv.l.Error(fmt.Sprintf("Panic recovered: %v", r))
-			// здесь можно выполнить cleanup или перезапустить сервис
-		}
-	}()
-
 	if srv.Cfg.IsUseProxy == 1 && proxyURL != "" {
-		// Парсим URL прокси
 		proxy, err := url.Parse(proxyURL)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpGet parse proxy URL error: %v", err)
@@ -151,28 +127,19 @@ func (srv *TgService) MyHttpGet(urll string) (resp *http.Response, err error) {
 			MaxIdleConns:       0,
 		}
 		
-		// Создаем HTTP клиент
 		client := &http.Client{
 			Transport: transport,
 			Timeout:   30 * time.Second,
 		}
 		
-		// Создаем GET запрос
 		req, err := http.NewRequest("GET", urll, nil)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpGet create request error: %v", err)
 		}
 		
-		// Выполняем запрос
 		resp, err = client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpGet http request error: %v", err)
-		}
-	
-		// Получаем IP из RemoteAddr
-		// RemoteAddr содержит IP и порт прокси, через который отправлен запрос
-		if resp.Request != nil && resp.Request.URL != nil {
-			fmt.Printf("MyHttpGet Запрос отправлен через прокси: %s\n", resp.Request.URL.Host)
 		}
 		
 		return resp, nil

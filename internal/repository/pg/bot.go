@@ -213,7 +213,7 @@ func (s *Database) EditBotField(
 	`, field)
 	_, err := s.Exec(q, content, botId)
 	if err != nil {
-		return fmt.Errorf("EditBotField: botId: %v field: %v content: %v err: %v", botId, field, content, err)
+		return fmt.Errorf("EditBotField: err: %v", err)
 	}
 	return nil
 }

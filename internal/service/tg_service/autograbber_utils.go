@@ -288,6 +288,30 @@ func (srv *TgService) ChangeLinkReferredToPost(originalLink string, vampBot enti
 	return "", nil
 }
 
+func isLink(link string, prefixSlice []string) bool {
+	for _, v := range prefixSlice {
+		if strings.HasPrefix(link, v) {
+			return true
+		}
+	}
+	return false
+}
+
+var (
+	fakeLichkaPrefixes = []string{
+		"https://t.me/lichka",
+		"https://lichka",
+		"https://fake-lichka",
+		"https://t.me/fake-lichka",
+	}
+	
+	fakeLinkPrefixes = []string{
+		"http://fake-link",
+		"fake-link",
+		"https://fake-link",
+	}
+)
+
 // метод заменяет fake-link на нужную группу-ссылку vampBota
 // и вырезает все ссылки и Entities если группа-ссылка - cut-link
 func (srv *TgService) PrepareEntities(
@@ -303,13 +327,20 @@ func (srv *TgService) PrepareEntities(
 
 	for i, v := range entities {
 		// если fake-link
-		if strings.HasPrefix(v.Url, "https://t.me/lichka") || strings.HasPrefix(v.Url, "https://lichka") || strings.HasPrefix(v.Url, "https://fake-lichka") || strings.HasPrefix(v.Url, "https://t.me/fake-lichka") {
+		if isLink(v.Url, fakeLichkaPrefixes) {
 			lichka := srv.DelAt(vampBot.Lichka)
 			urlLichka := fmt.Sprintf("https://t.me/%v", lichka)
 
 			if srv.Cfg.IsShortLink == 1 && srv.Cfg.IsShortLinkToClick == 0 {
 				newUrlResp, err := srv.CreateShortLinkWithWaiting(urlLichka)
-				srv.l.Debug("МЕТОД PrepareEntities go CreateShortLinkWithWaiting", zap.Any("urlLichka", urlLichka), zap.Any("newUrlResp", newUrlResp))
+				srv.l.Debug(
+					"МЕТОД PrepareEntities go CreateShortLinkWithWaiting",
+					zap.Any("urlLichka", urlLichka),
+					zap.Any("newUrlResp", newUrlResp),
+					zap.Any("vampBot", vampBot),
+					zap.Any("entities[i]", entities[i]),
+					zap.Any("entities", entities),
+				)
 				if err != nil || newUrlResp.Link == "" {
 					err := fmt.Errorf("PrepareEntities CreateShortLinkWithWaiting err: %v, newUrlResp: %+v, url: %v", err, newUrlResp, urlLichka)
 					srv.l.Error(err.Error())
@@ -350,7 +381,8 @@ func (srv *TgService) PrepareEntities(
 			entities[i].Url = urlLichka
 			continue
 		}
-		if strings.HasPrefix(v.Url, "http://fake-link") || strings.HasPrefix(v.Url, "fake-link") || strings.HasPrefix(v.Url, "https://fake-link") {
+
+		if isLink(v.Url, fakeLinkPrefixes) {
 			groupLink, err := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 			if err != nil {
 				return nil, messText, err
@@ -387,7 +419,12 @@ func (srv *TgService) PrepareEntities(
 					if srv.Cfg.BotTokenForStat != "" {
 						err = srv.SendMessageByToken(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
 						if err != nil {
-							srv.l.Debug("PrepareEntities SendMessageByToken err", zap.Error(err), zap.Any("reportMess", reportMess.String()), zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors), zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat))
+							srv.l.Debug(
+								"PrepareEntities SendMessageByToken err",zap.Error(err),
+								zap.Any("reportMess", reportMess.String()),
+								zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
+								zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
+							)
 						}
 					}
 				}
@@ -460,7 +497,7 @@ func (srv *TgService) PrepareReplyMarkup(entities models.InlineKeyboardMarkup, v
 				continue
 			}
 			// если fake-link
-			if strings.HasPrefix(*vv.Url, "http://fake-link") || strings.HasPrefix(*vv.Url, "fake-link") || strings.HasPrefix(*vv.Url, "https://fake-link") {
+			if isLink(*vv.Url, fakeLinkPrefixes) {
 				groupLink, err := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
 				if err != nil {
 					return models.InlineKeyboardMarkup{}, err
