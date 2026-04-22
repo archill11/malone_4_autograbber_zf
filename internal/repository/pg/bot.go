@@ -6,13 +6,24 @@ import (
 	"myapp/internal/entity"
 )
 
-func (s *Database) AddNewBot(id int, username, firstname, token string, isDonor int) error {
-	q := `INSERT INTO bots (id, username, first_name, token, is_donor) 
-			VALUES ($1, $2, $3, $4, $5) 
+func (s *Database) AddNewBot(
+	id int,
+	username, firstname, token string,
+	isDonor int,
+) error {
+	q := `
+		INSERT INTO bots (
+			id,
+			username,
+			first_name,
+			token,
+			is_donor
+		)
+		VALUES ($1, $2, $3, $4, $5) 
 		ON CONFLICT DO NOTHING`
 	_, err := s.Exec(q, id, username, firstname, token, isDonor)
 	if err != nil {
-		return fmt.Errorf("db: AddNewBot: %w", err)
+		return fmt.Errorf("AddNewBot err: %v", err)
 	}
 	return nil
 }
@@ -21,7 +32,7 @@ func (s *Database) DeleteBot(id int) error {
 	q := `DELETE FROM bots WHERE id = $1`
 	_, err := s.Exec(q, id)
 	if err != nil {
-		return fmt.Errorf("db: DeleteBot: %w", err)
+		return fmt.Errorf("DeleteBot err: %w", err)
 	}
 	return nil
 }
@@ -38,10 +49,10 @@ func (s *Database) GetBotByChannelId(channelId int) (entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q, channelId).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetBotByChannelId Scan: %v", err)
+		return u, fmt.Errorf("GetBotByChannelId Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetBotByChannelId Unmarshal: %v", err)
+		return u, fmt.Errorf("GetBotByChannelId Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -58,10 +69,10 @@ func (s *Database) GetBotByChannelLink(channelLink string) (entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q, channelLink).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetBotByChannelLink Scan: %v", err)
+		return u, fmt.Errorf("GetBotByChannelLink Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetBotByChannelLink Unmarshal: %v", err)
+		return u, fmt.Errorf("GetBotByChannelLink Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -78,10 +89,10 @@ func (s *Database) GetBotsByGrouLinkId(groupLinkId int) ([]entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q, groupLinkId).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetBotsByGrouLinkId Scan: %v", err)
+		return u, fmt.Errorf("GetBotsByGrouLinkId Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetBotsByGrouLinkId Unmarshal: %v", err)
+		return u, fmt.Errorf("GetBotsByGrouLinkId Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -98,10 +109,10 @@ func (s *Database) GetAllBots() ([]entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetAllBots Scan: %v", err)
+		return u, fmt.Errorf("GetAllBots Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetAllBots Unmarshal: %v", err)
+		return u, fmt.Errorf("GetAllBots Unmarshal err: %v", err)
 	}
 	u2 := make([]entity.Bot, 0)
 	for i := len(u)-1; i >= 0; i-- {
@@ -122,10 +133,10 @@ func (s *Database) GetAllVampBots() ([]entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetAllVampBots Scan: %v", err)
+		return u, fmt.Errorf("GetAllVampBots Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetAllVampBots Unmarshal: %v", err)
+		return u, fmt.Errorf("GetAllVampBots Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -142,10 +153,10 @@ func (s *Database) GetAllNoChannelBots() ([]entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetAllNoChannelBots Scan: %v", err)
+		return u, fmt.Errorf("GetAllNoChannelBots Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetAllNoChannelBots Unmarshal: %v", err)
+		return u, fmt.Errorf("GetAllNoChannelBots Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -162,10 +173,10 @@ func (s *Database) GetBotInfoById(botId int) (entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q, botId).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetBotInfoById Scan: %v", err)
+		return u, fmt.Errorf("GetBotInfoById Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetBotInfoById Unmarshal: %v", err)
+		return u, fmt.Errorf("GetBotInfoById Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -182,19 +193,27 @@ func (s *Database) GetBotInfoByToken(token string) (entity.Bot, error) {
 	var data []byte
 	err := s.QueryRow(q, token).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetBotInfoByToken Scan: %v", err)
+		return u, fmt.Errorf("GetBotInfoByToken Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetBotInfoByToken Unmarshal: %v", err)
+		return u, fmt.Errorf("GetBotInfoByToken Unmarshal err: %v", err)
 	}
 	return u, nil
 }
 
-func (s *Database) EditBotField(botId int, field string, content any) error {
-	q := fmt.Sprintf(`UPDATE bots SET %s = $1 WHERE id = $2`, field)
+func (s *Database) EditBotField(
+	botId int,
+	field string,
+	content any,
+) error {
+	q := fmt.Sprintf(`
+		UPDATE bots SET
+			%s = $1
+		WHERE id = $2
+	`, field)
 	_, err := s.Exec(q, content, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotField: botId: %d field: %s content: %v err: %w", botId, field, content, err)
+		return fmt.Errorf("EditBotField: botId: %v field: %v content: %v err: %v", botId, field, content, err)
 	}
 	return nil
 }
@@ -202,12 +221,12 @@ func (s *Database) EditBotField(botId int, field string, content any) error {
 func (s *Database) EditBotGroupLinkIdToNull(groupLinkId int) error {
 	q := `
 		UPDATE bots SET 
-		group_link_id = 0 
+			group_link_id = 0 
 		WHERE group_link_id = $1
 	`
 	_, err := s.Exec(q, groupLinkId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotGroupLinkIdToNull: groupLinkId: %d err: %w", groupLinkId, err)
+		return fmt.Errorf("EditBotGroupLinkIdToNull: err: %v", err)
 	}
 	return nil
 }
@@ -220,7 +239,7 @@ func (s *Database) EditBotGroupLinkId(groupLinkId, botId int) error {
 	`
 	_, err := s.Exec(q, groupLinkId, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotGroupLinkId: groupLinkId: %d botId: %d err: %w", groupLinkId, botId, err)
+		return fmt.Errorf("EditBotGroupLinkId: err: %v", err)
 
 	}
 	return nil
@@ -234,7 +253,7 @@ func (s *Database) EditBotPersonalLink(personal_link string, botId int) error {
 	`
 	_, err := s.Exec(q, personal_link, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotPersonalLink: personal_link: %s botId: %d err: %v", personal_link, botId, err)
+		return fmt.Errorf("EditBotPersonalLink: err: %v", err)
 
 	}
 	return nil
@@ -248,7 +267,7 @@ func (s *Database) EditBotLichka(botId int, lichka string) error {
 	`
 	_, err := s.Exec(q, lichka, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotLichka: lichka: %s botId: %d err: %w", lichka, botId, err)
+		return fmt.Errorf("EditBotLichka: err: %v", err)
 
 	}
 	return nil
@@ -262,7 +281,7 @@ func (s *Database) SetBotLichkaAllEmpty(lichka string) error {
 	`
 	_, err := s.Exec(q, lichka)
 	if err != nil {
-		return fmt.Errorf("db: SetBotLichkaAllEmpty: lichka: %s err: %w", lichka, err)
+		return fmt.Errorf("SetBotLichkaAllEmpty: err: %v", err)
 
 	}
 	return nil
@@ -276,7 +295,7 @@ func (s *Database) EditBotUserCreator(botId, user_creator int) error {
 	`
 	_, err := s.Exec(q, user_creator, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotUserCreator: user_creator: %d botId: %d err: %w", user_creator, botId, err)
+		return fmt.Errorf("EditBotUserCreator: err: %v", err)
 
 	}
 	return nil
@@ -290,7 +309,7 @@ func (s *Database) EditBotChIsSkam(botId, chIsSkam int) error {
 	`
 	_, err := s.Exec(q, chIsSkam, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotChIsSkam: botId: %d err: %w", botId, err)
+		return fmt.Errorf("EditBotChIsSkam: err: %v", err)
 
 	}
 	return nil
@@ -304,7 +323,7 @@ func (s *Database) EditBotDonorChId(botId, donor_ch_id int) error {
 	`
 	_, err := s.Exec(q, donor_ch_id, botId)
 	if err != nil {
-		return fmt.Errorf("EditBotDonorChId botId: %d, err: %w", botId, err)
+		return fmt.Errorf("EditBotDonorChId: err: %v", err)
 
 	}
 	return nil
@@ -318,12 +337,15 @@ func (s *Database) EditBotIsErrInStat(botId, is_err_in_stat int) error {
 	`
 	_, err := s.Exec(q, is_err_in_stat, botId)
 	if err != nil {
-		return fmt.Errorf("EditBotIsErrInStat botId: %d, err: %w", botId, err)
+		return fmt.Errorf("EditBotIsErrInStat: err: %v", err)
 	}
 	return nil
 }
 
-func (s *Database) EditBotToClickShortLink(botId int, to_click_short_link string) error {
+func (s *Database) EditBotToClickShortLink(
+	botId int,
+	to_click_short_link string,
+) error {
 	q := `
 		UPDATE bots SET
 			to_click_short_link = $1
@@ -331,13 +353,16 @@ func (s *Database) EditBotToClickShortLink(botId int, to_click_short_link string
 	`
 	_, err := s.Exec(q, to_click_short_link, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotToClickShortLink: to_click_short_link: %s botId: %d err: %w", to_click_short_link, botId, err)
+		return fmt.Errorf("EditBotToClickShortLink: err: %v", err)
 
 	}
 	return nil
 }
 
-func (s *Database) EditBotToClickShortLinkToLichka(botId int, to_click_short_link_to_lichka string) error {
+func (s *Database) EditBotToClickShortLinkToLichka(
+	botId int,
+	to_click_short_link_to_lichka string,
+) error {
 	q := `
 		UPDATE bots SET
 			to_click_short_link_to_lichka = $1
@@ -345,7 +370,7 @@ func (s *Database) EditBotToClickShortLinkToLichka(botId int, to_click_short_lin
 	`
 	_, err := s.Exec(q, to_click_short_link_to_lichka, botId)
 	if err != nil {
-		return fmt.Errorf("db: EditBotToClickShortLink: to_click_short_link: %s botId: %d err: %w", to_click_short_link_to_lichka, botId, err)
+		return fmt.Errorf("EditBotToClickShortLink: err: %v", err)
 
 	}
 	return nil
@@ -362,7 +387,7 @@ func (s *Database) EditBotShortDomenToReplace(
 	`
 	_, err := s.Exec(q, short_domen_to_replace, botId)
 	if err != nil {
-		return fmt.Errorf("EditBotShortDomenToReplace: short_domen_to_replace: %s botId: %d err: %w", short_domen_to_replace, botId, err)
+		return fmt.Errorf("EditBotShortDomenToReplace: err: %v", err)
 
 	}
 	return nil

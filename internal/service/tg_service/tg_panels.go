@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"myapp/internal/entity"
 	"strconv"
 )
 
@@ -133,7 +134,7 @@ func (srv *TgService) showAdminPanelRoles(chatId int) error {
 func (srv *TgService) showCfgPanel(chatId int) error {
 	var rm bytes.Buffer
 	rm.WriteString(`{"inline_keyboard" : [`)
-	cfgVal, _ := srv.db.GetCfgValById("auto-acc-media-gr")
+	cfgVal, _ := srv.db.GetCfgValById(entity.Auto_acc_media_gr_CfgId)
 	if cfgVal.Val == "1" {
 		rm.WriteString(`[{ "text": "выкл авто подтвержение", "callback_data": "change_auto-acc-media-gr_to_0_btn" }],`)
 	} else {

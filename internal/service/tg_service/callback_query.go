@@ -3,6 +3,7 @@ package tg_service
 import (
 	"bytes"
 	"fmt"
+	"myapp/internal/entity"
 	"myapp/internal/models"
 	my_regex "myapp/pkg/regex"
 	"strconv"
@@ -280,6 +281,7 @@ func (srv *TgService) HandleCallbackQuery(m models.Update) error {
 	if strings.HasPrefix(cq.Data, "edit_bot_") { // edit_bot_%s_link_to_%d_gr_link_btn
 		botId := my_regex.GetStringInBetween(cq.Data, "edit_bot_", "_link")
 		grLinkId := my_regex.GetStringInBetween(cq.Data, "to_", "_gr_link")
+
 		err := srv.CQ_edit_bot_group_link_stp2(m, botId, grLinkId)
 		if err != nil {
 			srv.SendMessage(fromId, ERR_MSG)
@@ -290,7 +292,8 @@ func (srv *TgService) HandleCallbackQuery(m models.Update) error {
 
 	if strings.HasPrefix(cq.Data, "change_auto-acc-media-gr_to_") { // change_auto-acc-media-gr_to_0_btn
 		newCfgVal := my_regex.GetStringInBetween(cq.Data, "change_auto-acc-media-gr_to_", "_btn")
-		err := srv.CQ_change_auto_acc_media_gr_to_(m, "auto-acc-media-gr", newCfgVal)
+
+		err := srv.CQ_change_auto_acc_media_gr_to_(m, entity.Auto_acc_media_gr_CfgId, newCfgVal)
 		if err != nil {
 			srv.SendMessage(fromId, ERR_MSG)
 			srv.SendMessage(fromId, err.Error())

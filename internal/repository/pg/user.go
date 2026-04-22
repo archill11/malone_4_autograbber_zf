@@ -6,6 +6,20 @@ import (
 	"myapp/internal/entity"
 )
 
+func (s *Database) AddNewUser(id int, username, firstname string) error {
+	q := `
+		INSERT INTO users (id, username, firstname)
+			VALUES ($1, $2, $3)
+		ON CONFLICT DO NOTHING
+	`
+	_, err := s.Exec(q, id, username, firstname)
+	if err != nil {
+		return fmt.Errorf("AddNewUser err: %v", err)
+	}
+	return nil
+}
+
+
 func (s *Database) GetUserById(id int) (entity.User, error) {
 	q := `
 		SELECT coalesce((
@@ -18,10 +32,10 @@ func (s *Database) GetUserById(id int) (entity.User, error) {
 	var data []byte
 	err := s.QueryRow(q, id).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetUserById Scan: %v", err)
+		return u, fmt.Errorf("GetUserById Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetUserById Unmarshal: %v", err)
+		return u, fmt.Errorf("GetUserById Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -38,10 +52,10 @@ func (s *Database) GetUserByUsername(username string) (entity.User, error) {
 	var data []byte
 	err := s.QueryRow(q, username).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetUserByUsername Scan: %v", err)
+		return u, fmt.Errorf("GetUserByUsername Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetUserByUsername Unmarshal: %v", err)
+		return u, fmt.Errorf("GetUserByUsername Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -50,7 +64,7 @@ func (s *Database) EditAdmin(username string, is_admin int) error {
 	q := `UPDATE users SET is_admin = $1 WHERE username = $2`
 	_, err := s.Exec(q, is_admin, username)
 	if err != nil {
-		return fmt.Errorf("EditAdmin: could not save %s, err: %v", username, err)
+		return fmt.Errorf("EditAdmin err: %v", err)
 	}
 	return nil
 }
@@ -59,7 +73,7 @@ func (s *Database) EditAdminById(id int, is_admin int) error {
 	q := `UPDATE users SET is_admin = $1 WHERE id = $2`
 	_, err := s.Exec(q, is_admin, id)
 	if err != nil {
-		return fmt.Errorf("EditAdminById: could not save %d, err: %v", id, err)
+		return fmt.Errorf("EditAdminById err: %v", err)
 	}
 	return nil
 }
@@ -68,7 +82,7 @@ func (s *Database) EditIsUser(username string, is_user int) error {
 	q := `UPDATE users SET is_user = $1 WHERE username = $2`
 	_, err := s.Exec(q, is_user, username)
 	if err != nil {
-		return fmt.Errorf("EditIsUser: could not save %s, err: %v", username, err)
+		return fmt.Errorf("EditIsUser err: %v", err)
 	}
 	return nil
 }
@@ -77,20 +91,7 @@ func (s *Database) EditIsUserById(id int, is_user int) error {
 	q := `UPDATE users SET is_user = $1 WHERE id = $2`
 	_, err := s.Exec(q, is_user, id)
 	if err != nil {
-		return fmt.Errorf("EditIsUserById: could not save %d, err: %v", id, err)
-	}
-	return nil
-}
-
-func (s *Database) AddNewUser(id int, username, firstname string) error {
-	q := `
-		INSERT INTO users (id, username, firstname)
-			VALUES ($1, $2, $3)
-		ON CONFLICT DO NOTHING
-	`
-	_, err := s.Exec(q, id, username, firstname)
-	if err != nil {
-		return fmt.Errorf("AddNewUser: could not save %d, err: %s", id, err)
+		return fmt.Errorf("EditIsUserById err: %v", err)
 	}
 	return nil
 }

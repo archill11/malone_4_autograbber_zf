@@ -12,7 +12,7 @@ func (s *Database) AddNewGroupLink(title, link string) error {
 		ON CONFLICT DO NOTHING`
 	_, err := s.Exec(q, title, link)
 	if err != nil {
-		return fmt.Errorf("db: AddNewGroupLink: %w", err)
+		return fmt.Errorf("AddNewGroupLink err: %v", err)
 	}
 	return nil
 }
@@ -23,7 +23,7 @@ func (s *Database) AddNewGroupLinkV2(title, link string, user_creator int) error
 		ON CONFLICT DO NOTHING`
 	_, err := s.Exec(q, title, link, user_creator)
 	if err != nil {
-		return fmt.Errorf("AddNewGroupLinkV2 err: %w", err)
+		return fmt.Errorf("AddNewGroupLinkV2 err: %v", err)
 	}
 	return nil
 }
@@ -32,16 +32,20 @@ func (s *Database) DeleteGroupLink(id int) error {
 	q := `DELETE FROM group_link WHERE id = $1`
 	_, err := s.Exec(q, id)
 	if err != nil {
-		return fmt.Errorf("db: DeleteGroupLink: %w", err)
+		return fmt.Errorf("DeleteGroupLink err: %v", err)
 	}
 	return nil
 }
 
 func (s *Database) UpdateGroupLink(id int, link string) error {
-	q := `UPDATE group_link SET link = $1 WHERE id = $2`
+	q := `
+		UPDATE group_link SET
+			link = $1
+		WHERE id = $2
+	`
 	_, err := s.Exec(q, link, id)
 	if err != nil {
-		return fmt.Errorf("db: UpdateGroupLink: %w", err)
+		return fmt.Errorf("UpdateGroupLink err: %v", err)
 	}
 	return nil
 }
@@ -57,10 +61,10 @@ func (s *Database) GetAllGroupLinks() ([]entity.GroupLink, error) {
 	var data []byte
 	err := s.QueryRow(q).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetAllGroupLinks Scan: %v", err)
+		return u, fmt.Errorf("GetAllGroupLinks Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetAllGroupLinks Unmarshal: %v", err)
+		return u, fmt.Errorf("GetAllGroupLinks Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -77,19 +81,23 @@ func (s *Database) GetGroupLinkById(id int) (entity.GroupLink, error) {
 	var data []byte
 	err := s.QueryRow(q, id).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetGroupLinkById Scan: %v", err)
+		return u, fmt.Errorf("GetGroupLinkById Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetGroupLinkById Unmarshal: %v", err)
+		return u, fmt.Errorf("GetGroupLinkById Unmarshal err: %v", err)
 	}
 	return u, nil
 }
 
 func (s *Database) EditGroupLinkUserCreator(grlLink string, user_creator int) error {
-	q := `UPDATE group_link SET user_creator = $1 WHERE link = $2`
+	q := `
+		UPDATE group_link SET
+			user_creator = $1
+		WHERE link = $2
+	`
 	_, err := s.Exec(q, user_creator, grlLink)
 	if err != nil {
-		return fmt.Errorf("EditGroupLinkUserCreator: user_creator: %d Link: %s err: %w", user_creator, grlLink, err)
+		return fmt.Errorf("EditGroupLinkUserCreator err: %v", err)
 
 	}
 	return nil

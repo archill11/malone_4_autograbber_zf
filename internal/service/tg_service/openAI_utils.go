@@ -37,7 +37,11 @@ func (srv *TgService) CreateGptTextOpenAI(postText string) (string, error) {
 
 	finalText := resp.OutputText()
 	if finalText == "" {
-		srv.l.Error("CreateGptTextOpenAI err: finalText is empty", zap.Any("resp", resp), zap.Any("inputPrompt", inputPrompt))
+		srv.l.Error(
+			"CreateGptTextOpenAI err: finalText is empty",
+			zap.Any("resp", resp),
+			zap.Any("inputPrompt", inputPrompt),
+		)
 		return "", fmt.Errorf("CreateGptTextOpenAI err: finalText is empty")
 	}
 

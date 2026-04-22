@@ -7,7 +7,11 @@ import (
 )
 
 func (s *Database) EditCfgVal(id, val string) error {
-	q := `UPDATE cfg SET val = $1 WHERE id = $2`
+	q := `
+		UPDATE cfg SET
+			val = $1
+		WHERE id = $2
+	`
 	_, err := s.Exec(q, val, id)
 	if err != nil {
 		return fmt.Errorf("EditCfgVal err: %w", err)
@@ -27,10 +31,10 @@ func (s *Database) GetCfgValById(id string) (entity.Cfg, error) {
 	var data []byte
 	err := s.QueryRow(q, id).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetCfgValById Scan: %v", err)
+		return u, fmt.Errorf("GetCfgValById Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetCfgValById Unmarshal: %v", err)
+		return u, fmt.Errorf("GetCfgValById Unmarshal err: %v", err)
 	}
 	return u, nil
 }

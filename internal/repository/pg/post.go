@@ -6,13 +6,24 @@ import (
 	"myapp/internal/entity"
 )
 
-func (s *Database) AddNewPost(chId, postId, donorChPostId int, caption string) error {
-	q := `INSERT INTO posts (ch_id, post_id, donor_ch_post_id, caption) 
-			VALUES ($1, $2, $3, $4)
-		ON CONFLICT DO NOTHING`
+func (s *Database) AddNewPost(
+	chId,
+	postId,
+	donorChPostId int,
+	caption string,
+) error {
+	q := `
+		INSERT INTO posts (
+			ch_id,
+			post_id,
+			donor_ch_post_id,
+			caption
+		) VALUES ($1, $2, $3, $4)
+		ON CONFLICT DO NOTHING
+	`
 	_, err := s.Exec(q, chId, postId, donorChPostId, caption)
 	if err != nil {
-		return fmt.Errorf("db: AddNewPost: ChId: %d PostId %d DonorChPostId %d err: %w", chId, postId, donorChPostId, err)
+		return fmt.Errorf("AddNewPost err: %v", err)
 	}
 	return nil
 }
@@ -31,10 +42,10 @@ func (s *Database) GetPostByDonorIdAndChId(donorChPostId, channelId int) (entity
 	var data []byte
 	err := s.QueryRow(q, channelId, donorChPostId).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetPostByDonorIdAndChId Scan: %v", err)
+		return u, fmt.Errorf("GetPostByDonorIdAndChId Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetPostByDonorIdAndChId Unmarshal: %v", err)
+		return u, fmt.Errorf("GetPostByDonorIdAndChId Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -52,10 +63,10 @@ func (s *Database) GetPostsByDonorIdAndChId(donorChPostId, channelId int) ([]ent
 	var data []byte
 	err := s.QueryRow(q, channelId, donorChPostId).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetPostsByDonorIdAndChId Scan: %v", err)
+		return u, fmt.Errorf("GetPostsByDonorIdAndChId Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetPostsByDonorIdAndChId Unmarshal: %v", err)
+		return u, fmt.Errorf("GetPostsByDonorIdAndChId Unmarshal err: %v", err)
 	}
 	return u, nil
 }
@@ -73,10 +84,10 @@ func (s *Database) GetPostsByDonorIdAndChId_Max(donorChPostId, channelId int) (e
 	var data []byte
 	err := s.QueryRow(q, channelId, donorChPostId).Scan(&data)
 	if err != nil {
-		return entity.Post{}, fmt.Errorf("GetPostsByDonorIdAndChId_Max Scan: %v", err)
+		return entity.Post{}, fmt.Errorf("GetPostsByDonorIdAndChId_Max Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return entity.Post{}, fmt.Errorf("GetPostsByDonorIdAndChId_Max Unmarshal: %v", err)
+		return entity.Post{}, fmt.Errorf("GetPostsByDonorIdAndChId_Max Unmarshal err: %v", err)
 	}
 	var max entity.Post
 	for _, v := range u {
@@ -95,17 +106,17 @@ func (s *Database) GetPostByChIdAndBotToken(channelId int, botToken string) (ent
 			JOIN bots AS b
 				ON p.ch_id = b.ch_id
 			WHERE p.ch_id = $1 
-			AND b.token = $2
+				AND b.token = $2
 		), '{}'::json)
 	`
 	var u entity.Post
 	var data []byte
 	err := s.QueryRow(q, channelId, botToken).Scan(&data)
 	if err != nil {
-		return u, fmt.Errorf("GetPostByDonorIdAndChId Scan: %v", err)
+		return u, fmt.Errorf("GetPostByDonorIdAndChId Scan err: %v", err)
 	}
 	if err := json.Unmarshal(data, &u); err != nil {
-		return u, fmt.Errorf("GetPostByDonorIdAndChId Unmarshal: %v", err)
+		return u, fmt.Errorf("GetPostByDonorIdAndChId Unmarshal err: %v", err)
 	}
 	return u, nil
 }

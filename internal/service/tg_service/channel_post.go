@@ -124,9 +124,9 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 		}
 	}
 
-	srv.db.EditCfgVal("is-sending-now", "1")
+	srv.db.EditCfgVal(entity.Is_sending_now_CfgId, "1")
 	defer func() {
-		srv.db.EditCfgVal("is-sending-now", "0")
+		srv.db.EditCfgVal(entity.Is_sending_now_CfgId, "0")
 	}()
 
 	postUUID, _ := uuid.NewV7()
@@ -1038,9 +1038,9 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		return fmt.Errorf("sendChPostAsVamp_Media_Group GetAllVampBots err: len(allVampBots) == 0")
 	}
 
-	s.db.EditCfgVal("is-sending-now", "1")
+	s.db.EditCfgVal(entity.Is_sending_now_CfgId, "1")
 	defer func() {
-		s.db.EditCfgVal("is-sending-now", "0")
+		s.db.EditCfgVal(entity.Is_sending_now_CfgId, "0")
 	}()
 
 	var okSend int

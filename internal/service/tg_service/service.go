@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"myapp/internal/entity"
 	"myapp/internal/models"
 	"myapp/internal/repository/pg"
 	"myapp/pkg/files"
@@ -508,7 +509,7 @@ func (srv *TgService) AcceptChPostByAdmin() {
 				srv.l.Error(fmt.Sprintf("AcceptChPostByAdmin: sendData(sendMediaGroup) err: %v", err))
 			}
 
-			cfgVal, _ := srv.db.GetCfgValById("auto-acc-media-gr")
+			cfgVal, _ := srv.db.GetCfgValById(entity.Auto_acc_media_gr_CfgId)
 			if cfgVal.Val == "1" {
 				m := models.Update{
 					CallbackQuery: &models.CallbackQuery{

@@ -31,7 +31,7 @@ func (s *Database) AddNewTgError(
 		err_description,
 	)
 	if err != nil {
-		return fmt.Errorf("db: AddNewTgError: %w", err)
+		return fmt.Errorf("AddNewTgError err: %v", err)
 	}
 
 	return nil

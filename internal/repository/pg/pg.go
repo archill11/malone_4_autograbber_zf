@@ -45,12 +45,14 @@ type (
 )
 
 func New(config DBConfig, l *zap.Logger) (*Database, error) {
+	ctx := context.Background()
+
 	databaseURI := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
 		config.User, config.Password, config.Host, config.Port, config.Database,
 	)
 	databaseURI += "?pool_max_conns=10&pool_max_conn_lifetime=1m&pool_max_conn_idle_time=1m"
-	db, err := pgxpool.Connect(context.Background(), databaseURI)
+	db, err := pgxpool.Connect(ctx, databaseURI)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,7 @@ func New(config DBConfig, l *zap.Logger) (*Database, error) {
 		tg_error,
 	}
 	for _, v := range queries {
-		if _, err := db.Exec(context.Background(), v); err != nil {
+		if _, err := db.Exec(ctx, v); err != nil {
 			fmt.Println("err", v)
 			return nil, err
 		}
