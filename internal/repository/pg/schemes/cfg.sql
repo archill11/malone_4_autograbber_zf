@@ -14,3 +14,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO cfg (id, val)
   VALUES ('is-sending-now', '0')
 ON CONFLICT DO NOTHING;
+
+INSERT INTO cfg (id, val)
+  VALUES ('CHORT_LINK_URL', 'http')
+ON CONFLICT DO NOTHING;

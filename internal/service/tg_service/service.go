@@ -50,7 +50,7 @@ type (
 		IsGptTextOpenAI  int
 		OpenAiAPIToken  string
 		IsShortLink  int
-		ShortLinkUrl  string
+		// ShortLinkUrl  string
 		IsShortLinkToClick  int
 		ToClickToken  string
 		IsChangeMediaMetadata int

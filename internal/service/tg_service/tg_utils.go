@@ -212,7 +212,9 @@ func randRange(min, max int) int {
 }
 
 func (srv *TgService) CreateShortLink(url string) (models.CreateShortLinkResp, error) {
-	if srv.Cfg.IsShortLink == 1 && srv.Cfg.ShortLinkUrl != "" {
+	cfgVal, _ := srv.db.GetCfgValById("CHORT_LINK_URL")
+
+	if srv.Cfg.IsShortLink == 1 && cfgVal.Val != "" {
 		return srv.CreateShortLinkOwne(url)
 	}
 
@@ -235,8 +237,14 @@ func (srv *TgService) CreateShortLinkOwne(url string) (models.CreateShortLinkRes
 	if err != nil {
 		return models.CreateShortLinkResp{}, fmt.Errorf("CreateShortLink Marshal err: %v", err)
 	}
+
+	cfgVal, _ := srv.db.GetCfgValById("CHORT_LINK_URL")
+	if cfgVal.Val == "" {
+		srv.l.Warn("CreateShortLinkOwne CHORT_LINK_URL cfgVal.Val is empty")
+	}
+
 	resp, err := http.Post(
-		srv.Cfg.ShortLinkUrl,
+		cfgVal.Val,
 		"application/json",
 		bytes.NewBuffer(json_data),
 	)

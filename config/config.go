@@ -55,7 +55,7 @@ func Get() *Config {
 	c.Tg.IsGptTextOpenAI, _       = strconv.Atoi(os.Getenv("IS_GPT_TEXT_OPENAI")) // создание уникальных текстов через openai API
 	c.Tg.OpenAiAPIToken                        = os.Getenv("OPENAI_API_TOKEN")
 	c.Tg.IsShortLink, _           = strconv.Atoi(os.Getenv("IS_CHORT_LINK")) // создание уникальных сокращенных ссылок
-	c.Tg.ShortLinkUrl                          = os.Getenv("CHORT_LINK_URL") // url создание уникальных сокращенных ссылок
+	// c.Tg.ShortLinkUrl                          = os.Getenv("CHORT_LINK_URL") // url создание уникальных сокращенных ссылок
 	c.Tg.IsShortLinkToClick, _    = strconv.Atoi(os.Getenv("IS_CHORT_LINK_TO_CLICK")) // создание уникальных сокращенных ссылок через to.click
 	c.Tg.ToClickToken                          = os.Getenv("TO_CLICK_TOKEN") // token создание уникальных сокращенных ссылок через to.click
 	c.Tg.IsChangeMediaMetadata, _ = strconv.Atoi(os.Getenv("IS_CHANGE_MEDIA_METADATA")) // поменять метадату в медиафайлах
