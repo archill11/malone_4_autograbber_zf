@@ -27,7 +27,11 @@ func (srv *TgService) Donor_HandleChannelPost(m models.Update) error {
 	channel_id := m.ChannelPost.Chat.Id
 	grabberBot, _ := srv.db.GetBotInfoByToken(srv.Cfg.Token)
 	if channel_id != grabberBot.ChId {
-		srv.l.Error("Donor_HandleChannelPost channel_id != grabberBot.ChId", zap.Any("channel_id", channel_id), zap.Any("grabberBot.ChId", grabberBot.ChId))
+		srv.l.Error(
+			"Donor_HandleChannelPost channel_id != grabberBot.ChId",
+			zap.Any("channel_id", channel_id),
+			zap.Any("grabberBot.ChId", grabberBot.ChId),
+		)
 		return nil
 	}
 
@@ -183,70 +187,16 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	}
 	srv.l.Info("Donor_addChannelPost: end")
 
-	donorBot, _ := srv.db.GetBotInfoByToken(srv.Cfg.Token)
+	srv.SendFinalReport(
+		channel_id, message_id,
+		postUUID, allVampBots,
+		okSend, notOkSend, ChId0, IsDisable,
+		errorLinks,
+	)
 
-
-	var reportMess bytes.Buffer
-	reportMess.WriteString(fmt.Sprintf("Отчет по посту:\n"))
-	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-	reportMess.WriteString(fmt.Sprintf("Бот: %v\n", srv.AddAt(donorBot.Username)))
-	reportMess.WriteString(fmt.Sprintf("Пост: %v\n", srv.CreateChPostLink(channel_id, message_id)))
-	reportMess.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
-	reportMess.WriteString(fmt.Sprintf("Всего каналов: %v\n", len(allVampBots)))
-	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %v\n", okSend))
-	if notOkSend != 0 {
-		reportMess.WriteString(fmt.Sprintf("Неуспешно: %v\n", notOkSend))
-	}
-	if ChId0 != 0 {
-		reportMess.WriteString(fmt.Sprintf("Без подвяз. канала: %v\n", ChId0))
-	}
-	if IsDisable != 0 {
-		reportMess.WriteString(fmt.Sprintf("Отключены от рассылки: %v\n", IsDisable))
-	}
-
-	var reportMessErrorLinks bytes.Buffer
-	reportMessErrorLinks.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-	reportMessErrorLinks.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
-	reportMessErrorLinks.WriteString(fmt.Sprintf("Список ошибок:\n"))
-	if len(errorLinks) > 0 {
-		for i, errLink := range errorLinks {
-			reportMessErrorLinks.WriteString(fmt.Sprintf("%v) %v\n", i+1, errLink))
-	
-			if i%20 == 0 && i > 0 {
-				sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
-				if err != nil {
-					srv.l.Error(fmt.Sprintf("Donor_addChannelPost SendMessageByToken err: %v", err))
-				}
-				if sendMessageResp.Result.MessageId != 0 {
-					errLinks := srv.CreateChPostLink(srv.Cfg.ChForStat, sendMessageResp.Result.MessageId)
-					reportMess.WriteString(fmt.Sprintf("Список Ошибок: %v\n", errLinks))
-				}
-				reportMessErrorLinks.Reset()
-			}
-		}
-		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMessErrorLinks.String(), srv.Cfg.BotTokenForStat)
-	}
-
-	srv.SendMessage(channel_id, reportMess.String())
-	if srv.Cfg.BotPrefix != "_test"  { // стата в общий канал
-		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMess.String(), srv.Cfg.BotTokenForStat)
-	}
-
-	var reportMess2 bytes.Buffer
-	if len(refkiMap) > 0 {
-		reportMess2.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-		reportMess2.WriteString(fmt.Sprintf("uuid поста в логах: %v\n", srv.CreateCodeFmt(postUUID.String())))
-	}
-	for key, val := range refkiMap {
-		grLinkName, _ := srv.db.GetGroupLinkById(key)
-
-		reportMess2.WriteString(fmt.Sprintf("Реф: %v\n", grLinkName.Title))
-		reportMess2.WriteString(fmt.Sprintf("✅%v/%v❌\n", val["Успешно"], val["Неуспешно"]))
-		reportMess2.WriteString("\n")
-	}
-	if srv.Cfg.BotPrefix != "_test"  { // стата в общий канал
-		srv.SendMessageByToken(srv.Cfg.ChForStat, reportMess2.String(), srv.Cfg.BotTokenForStat)
-	}
+	srv.SendFinalReportByRefs(
+		refkiMap, postUUID,
+	)
 
 	return nil
 }
@@ -348,39 +298,29 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 	if err != nil {
 		return fmt.Errorf("sendChPostAsVamp Marshal futureMesJson err: %v", err), errLink
 	}
-	srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post", zap.Any("futureMesJson", futureMesJson), zap.Any("string(json_data)", string(json_data)))
+	
+	srv.l.Info(
+		"sendChPostAsVamp -> если просто текст -> http.Post",
+		zap.Any("futureMesJson", futureMesJson),
+		zap.Any("string(json_data)",
+		string(json_data)),
+	)
+	
 	sendVampPostResp, err := srv.MyHttpPost(
 		fmt.Sprintf(srv.Cfg.TgEndp, vampBot.Token, "sendMessage"),
 		"application/json",
 		bytes.NewBuffer(json_data),
 	)
-	srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after",)
 	if err != nil {
-		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil", zap.Error(err))
 		dbErr := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, err.Error())
 		if dbErr != nil {
 			srv.l.Error("sendChPostAsVamp AddNewTgError dbErr", zap.Error(dbErr))
 		}
-		srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after err != nil after AddNewTgError", zap.Error(err))
 
-		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-		reportMess.WriteString(fmt.Sprintf("Ошибка при попытке отправки поста в канал\n\n"))
-		reportMess.WriteString(fmt.Sprintf("err: %v \n\n", err.Error()))
-		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
-		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
-		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
-		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+		reportMessage := "Ошибка при попытке отправки поста в канал"
 
-		sendMessageResp, err2 := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-		if err2 != nil {
-			srv.l.Warn("sendChPostAsVamp SendMessageByTokenV2 err2",
-				zap.Error(err2),
-				zap.Any("reportMess", reportMess.String()),
-				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
-				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
-			)
-		}
+		sendMessageResp := srv.SendErrorReportToErrorStatCh(vampBot, err.Error(), reportMessage)
+
 		if sendMessageResp.Result.MessageId != 0 {
 			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
 		}
@@ -389,7 +329,9 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 	}
 	defer sendVampPostResp.Body.Close()
 
-	srv.l.Info("sendChPostAsVamp -> если просто текст -> http.Post after defer sendVampPostResp.Body.Close()",)
+	srv.l.Info(
+		"sendChPostAsVamp -> если просто текст -> http.Post after defer sendVampPostResp.Body.Close()",
+	)
 
 	var cAny struct {
 		models.BotErrResp
@@ -407,41 +349,13 @@ func (srv *TgService) sendChPostAsVamp(vampBot entity.Bot, m models.Update) (err
 			srv.l.Error("sendChPostAsVamp AddNewTgError dbErr", zap.Error(dbErr))
 		}
 
-		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-		reportMess.WriteString(fmt.Sprintf("Ошибка при отправке поста в канал\n\n"))
-		reportMess.WriteString(fmt.Sprintf("err: %v | %v\n\n", cAny.BotErrResp.ErrorCode, cAny.BotErrResp.Description))
-		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
-		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
-		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
-		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+		errStr := fmt.Sprintf("err: %v | %v\n\n", cAny.BotErrResp.ErrorCode, cAny.BotErrResp.Description)
+		reportMessage := "Ошибка при попытке отправки поста в канал"
 
-		sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-		if err != nil {
-			srv.l.Warn("sendChPostAsVamp SendMessageByTokenV2 err",
-				zap.Error(err),
-				zap.Any("reportMess", reportMess.String()),
-				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
-				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
-			)
-		}
+		sendMessageResp := srv.SendErrorReportToErrorStatCh(vampBot, errStr, reportMessage)
+
 		if sendMessageResp.Result.MessageId != 0 {
 			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
-		}
-
-
-		if (srv.Cfg.BotPrefix == "_noviy" && vampBot.GroupLinkId == 2) || (srv.Cfg.BotPrefix == "_upravru2" && vampBot.GroupLinkId == 12) {
-			if vampBot.IsErrInStat == 0 {
-				err = srv.SendMessageByToken(-1002512374528, reportMess.String(), srv.Cfg.BotTokenForStat)
-				if err != nil {
-					srv.l.Error("sendChPostAsVamp SendMessageByToken err",
-						zap.Error(err),
-						zap.Any("reportMess", reportMess.String()),
-					)
-				}
-
-				srv.db.EditBotIsErrInStat(vampBot.Id, 1)
-			}
 		}
 
 		errMess := fmt.Errorf("sendChPostAsVamp Post ErrorResp: %+v", cAny)
@@ -470,7 +384,7 @@ func (srv *TgService) sendChPostAsVamp_VideoNote(vampBot entity.Bot, m models.Up
 		}
 		futureVideoNoteJson["reply_to_message_id"] = strconv.Itoa(currPost.PostId)
 	}
-	var newInlineKeyboardMarkupForSupergroup models.InlineKeyboardMarkup
+
 	if m.ChannelPost.ReplyMarkup != nil {
 		var inlineKeyboardMarkup models.InlineKeyboardMarkup
 		mycopy.DeepCopy(m.ChannelPost.ReplyMarkup, &inlineKeyboardMarkup)
@@ -479,10 +393,14 @@ func (srv *TgService) sendChPostAsVamp_VideoNote(vampBot entity.Bot, m models.Up
 		if err != nil {
 			return fmt.Errorf("sendChPostAsVamp_VideoNote PrepareReplyMarkup err: %v", err)
 		}
-		newInlineKeyboardMarkupForSupergroup = newInlineKeyboardMarkup
+
 		json_data, err := json.Marshal(newInlineKeyboardMarkup)
 		if err != nil {
-			srv.l.Error("sendChPostAsVamp_VideoNote Marshal err", zap.Error(err), zap.Any("newInlineKeyboardMarkup", newInlineKeyboardMarkup))
+			srv.l.Error(
+				"sendChPostAsVamp_VideoNote Marshal err",
+				zap.Error(err),
+				zap.Any("newInlineKeyboardMarkup", newInlineKeyboardMarkup),
+			)
 		}
 		futureVideoNoteJson["reply_markup"] = string(json_data)
 	}
@@ -537,27 +455,6 @@ func (srv *TgService) sendChPostAsVamp_VideoNote(vampBot entity.Bot, m models.Up
 		}
 	}
 
-	getChatResp, err := srv.GetChat(vampBot.ChId, vampBot.Token)
-	if err != nil {
-		return fmt.Errorf("sendChPostAsVamp_VideoNote GetChat err: %v", err)
-	}
-	if getChatResp.Result.Type != "supergroup" {
-		return nil
-	}
-	if newInlineKeyboardMarkupForSupergroup.InlineKeyboard == nil {
-		return nil
-	}
-	// for _, inlineKeyboard := range newInlineKeyboardMarkupForSupergroup.InlineKeyboard {
-	// 	for _, v := range inlineKeyboard {
-	// 		if v.Url == nil && v.Text == "" {
-	// 			continue
-	// 		}
-	// 		err = srv.SendMessageByToken(vampBot.ChId, srv.ChInfoToLinkHTML(*v.Url, v.Text), vampBot.Token)
-	// 		if err != nil {
-	// 			return fmt.Errorf("sendChPostAsVamp_VideoNote SendMessageByToken for supergroup err: %v", err)
-	// 		}
-	// 	}
-	// }
 	return nil
 }
 
@@ -587,7 +484,11 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 		}
 		json_data, err := json.Marshal(newInlineKeyboardMarkup)
 		if err != nil {
-			srv.l.Error("sendChPostAsVamp_Video_or_Photo Marshal err", zap.Error(err), zap.Any("newInlineKeyboardMarkup", newInlineKeyboardMarkup))
+			srv.l.Error(
+				"sendChPostAsVamp_Video_or_Photo Marshal err",
+				zap.Error(err),
+				zap.Any("newInlineKeyboardMarkup", newInlineKeyboardMarkup),
+			)
 			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo Marshal err: %v", err), errLink
 		}
 		futureVideoJson["reply_markup"] = string(json_data)
@@ -706,13 +607,6 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 
 	srv.l.Debug("sendChPostAsVamp_Video_or_Photo call fileNameInServerafter all", zap.Any("fileNameInServer", fileNameInServer))
 
-	defer func() {
-		if r := recover(); r != nil {
-			srv.l.Error(fmt.Sprintf("Panic recovered: %v", r))
-			// здесь можно выполнить cleanup или перезапустить сервис
-		}
-	}()
-
 	formDataContentType, body, err := files.CreateForm(futureVideoJson)
 	if err != nil {
 		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo CreateForm err: %v", err), errLink
@@ -735,24 +629,10 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError dbErr", zap.Error(dbErr))
 		}
 
-		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-		reportMess.WriteString(fmt.Sprintf("Ошибка при попытке отправки поста с медиа(%v) в канал\n\n", postType))
-		reportMess.WriteString(fmt.Sprintf("err: %v\n\n", err.Error()))
-		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
-		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
-		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
-		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+		perrorMessage := fmt.Sprintf("Ошибка при попытке отправки поста с медиа(%v) в канал", postType)
 
-		sendMessageResp, err2 := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-		if err2 != nil {
-			srv.l.Warn("sendChPostAsVamp_Video_or_Photo SendMessageByTokenV2 err",
-				zap.Error(err2),
-				zap.Any("reportMess", reportMess.String()),
-				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
-				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
-			)
-		}
+		sendMessageResp := srv.SendErrorReportToErrorStatCh(vampBot, err.Error(), perrorMessage)
+
 		if sendMessageResp.Result.MessageId != 0 {
 			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
 		}
@@ -771,26 +651,15 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError dbErr", zap.Error(dbErr))
 		}
 
-		reportMess := bytes.Buffer{}
-		reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %v\n", srv.CreateCodeFmt(srv.Cfg.BotPrefix)))
-		reportMess.WriteString(fmt.Sprintf("Ошибка при отправке поста с медиа(%v) в канал\n\n", postType))
-		reportMess.WriteString(fmt.Sprintf("err: %v | %v\n\n", sendMediaResp.BotErrResp.ErrorCode, sendMediaResp.BotErrResp.Description))
-		reportMess.WriteString(fmt.Sprintf("bot: %v | %v\n", srv.AddAt(vampBot.Username), vampBot.Token))
-		reportMess.WriteString(fmt.Sprintf("ch link: %v\n", vampBot.ChLink))
-		gr, _ := srv.db.GetGroupLinkById(vampBot.GroupLinkId)
-		reportMess.WriteString(fmt.Sprintf("группа-ссылка: %v - %v\n", vampBot.GroupLinkId, gr.Title))
+		errStr := fmt.Sprintf("err: %v | %v\n\n", sendMediaResp.BotErrResp.ErrorCode, sendMediaResp.BotErrResp.Description)
+		perrorMessage := fmt.Sprintf("Ошибка при попытке отправки поста с медиа(%v) в канал", postType)
 
-		sendMessageResp, err := srv.SendMessageByTokenV2(srv.Cfg.ChForStatErrors, reportMess.String(), srv.Cfg.BotTokenForStat)
-		if err != nil {
-			srv.l.Warn("sendChPostAsVamp_Video_or_Photo SendMessageByTokenV2 err",
-				zap.Error(err),
-				zap.Any("reportMess", reportMess.String()),
-				zap.Any("ChForStatErrors", srv.Cfg.ChForStatErrors),
-				zap.Any("BotTokenForStat", srv.Cfg.BotTokenForStat),
-			)
-		}
+		sendMessageResp := srv.SendErrorReportToErrorStatCh(vampBot, errStr, perrorMessage)
+
 		if sendMessageResp.Result.MessageId != 0 {
 			errLink = srv.CreateChPostLink(srv.Cfg.ChForStatErrors, sendMessageResp.Result.MessageId)
+		} else {
+			errLink = ""
 		}
 	}
 
@@ -910,6 +779,7 @@ func (srv *TgService) sendAndDeleteMedia(vampBot entity.Bot, fileNameInServer st
 		return "", 0, fmt.Errorf("sendAndDeleteMedia Post err: %v", err)
 	}
 	defer sendMediaResp.Body.Close()
+
 	var cAny2 models.SendMediaResp
 	if err := json.NewDecoder(sendMediaResp.Body).Decode(&cAny2); err != nil && err != io.EOF {
 		return "", 0, fmt.Errorf("sendAndDeleteMedia Decode err: %v", err)
@@ -1023,12 +893,20 @@ func (srv *TgService) sendAndDeleteMediaV2(
 }
 
 func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
-	s.l.Info("sendChPostAsVamp_Media_Group start sending", zap.Any("len s.MediaStore.MediaGroups", len(s.MediaStore.MediaGroups)), zap.Any("s.MediaStore.MediaGroups", s.MediaStore.MediaGroups))
+	s.l.Info(
+		"sendChPostAsVamp_Media_Group start sending",
+		zap.Any("len s.MediaStore.MediaGroups", len(s.MediaStore.MediaGroups)),
+		zap.Any("s.MediaStore.MediaGroups", s.MediaStore.MediaGroups),
+	)
 	mediaArr, ok := s.MediaStore.MediaGroups[mediaGroupId]
 	if !ok {
 		return fmt.Errorf("sendChPostAsVamp_Media_Group: not found in MediaStore")
 	}
-	s.l.Info("sendChPostAsVamp_Media_Group", zap.Any("len mediaArr", len(mediaArr)), zap.Any("mediaArr", mediaArr))
+	s.l.Info(
+		"sendChPostAsVamp_Media_Group",
+		zap.Any("len mediaArr", len(mediaArr)),
+		zap.Any("mediaArr", mediaArr),
+	)
 
 	allVampBots, err := s.db.GetAllVampBots()
 	if err != nil {
@@ -1148,13 +1026,22 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 			continue
 		}
 
-		s.l.Info("sendChPostAsVamp_Media_Group: sending media-group", zap.Any("bot ch link", vampBot.ChLink), zap.Any("media_json", mediaJson), zap.Any("bot", vampBot))
+		s.l.Info(
+			"sendChPostAsVamp_Media_Group: sending media-group",
+			zap.Any("bot ch link", vampBot.ChLink),
+			zap.Any("media_json", mediaJson),
+			zap.Any("bot", vampBot),
+		)
 		cAny223, err := s.SendMediaGroup(media_json, vampBot.Token)
 		if err != nil {
 			notOkSend++
 			s.l.Error(fmt.Sprintf("sendChPostAsVamp_Media_Group: SendMediaGroup err: %v", err))
 		}
-		s.l.Info("sendChPostAsVamp_Media_Group SendMediaGroup response", zap.Any("bot ch link", vampBot.ChLink), zap.Any("response", cAny223))
+		s.l.Info(
+			"sendChPostAsVamp_Media_Group SendMediaGroup response",
+			zap.Any("bot ch link", vampBot.ChLink),
+			zap.Any("response", cAny223),
+		)
 		
 		for i, v := range cAny223.Result {
 			if i == 0 {
@@ -1175,27 +1062,13 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 	}
 
 	delete(s.MediaStore.MediaGroups, mediaGroupId)
-	s.l.Info("sendChPostAsVamp_Media_Group end sending", zap.Any("len s.MediaStore.MediaGroups", len(s.MediaStore.MediaGroups)), zap.Any("s.MediaStore.MediaGroups", s.MediaStore.MediaGroups))
+	s.l.Info(
+		"sendChPostAsVamp_Media_Group end sending",
+		zap.Any("len s.MediaStore.MediaGroups", len(s.MediaStore.MediaGroups)),
+		zap.Any("s.MediaStore.MediaGroups", s.MediaStore.MediaGroups),
+	)
 
-	var reportMess bytes.Buffer
-	reportMess.WriteString(fmt.Sprintf("Отчет по медиа-груп:\n"))
-	reportMess.WriteString(fmt.Sprintf("Донор псевдоним: %s\n", s.CreateCodeFmt(s.Cfg.BotPrefix)))
-	reportMess.WriteString(fmt.Sprintf("Всего ботов: %d\n", len(allVampBots)))
-	reportMess.WriteString(fmt.Sprintf("Успешно отправлено: %d\n", okSend))
-	if notOkSend != 0 {
-		reportMess.WriteString(fmt.Sprintf("Неуспешно: %d\n", notOkSend))
-	}
-	if ChId0 != 0 {
-		reportMess.WriteString(fmt.Sprintf("Без подвяз. канала: %d\n", ChId0))
-	}
-	if IsDisable != 0 {
-		reportMess.WriteString(fmt.Sprintf("Отключены от рассылки: %d\n", IsDisable)) 
-	}
-	donorBot, err := s.db.GetBotInfoByToken(s.Cfg.Token)
-	if err != nil {
-		s.l.Error(fmt.Errorf("sendChPostAsVamp_Media_Group GetBotInfoByToken err: %v", err).Error())
-	}
-	s.SendMessage(donorBot.ChId, reportMess.String())
+	s.SendReportAboutSendingMediaGroup(len(allVampBots), okSend, notOkSend, ChId0, IsDisable)
 
 	return nil
 }
