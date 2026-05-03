@@ -423,12 +423,12 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 
 	bot.ChId = j.Result.Id
 	bot.ChLink = j.Result.InviteLink
-	err = srv.db.EditBotField(bot.Id, "ch_id", bot.ChId)
+	err = srv.db.EditBotChId(bot.ChId, bot.Id)
 	if err != nil {
 		srv.SendMessage(fromId, ERR_MSG)
 		return err
 	}
-	err = srv.db.EditBotField(bot.Id, "ch_link", bot.ChLink)
+	err = srv.db.EditBotChLink(bot.ChLink, bot.Id)
 	if err != nil {
 		srv.SendMessage(fromId, ERR_MSG)
 		return err

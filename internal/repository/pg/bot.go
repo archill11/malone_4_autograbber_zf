@@ -218,6 +218,31 @@ func (s *Database) EditBotField(
 	return nil
 }
 
+func (s *Database) EditBotChId(chId int, botId int) error {
+	q := `
+		UPDATE bots SET 
+			ch_id = $1
+		WHERE id = $2
+	`
+	_, err := s.Exec(q, chId, botId)
+	if err != nil {
+		return fmt.Errorf("EditBotChId: err: %v", err)
+	}
+	return nil
+}
+func (s *Database) EditBotChLink(chLink string, botId int) error {
+	q := `
+		UPDATE bots SET 
+			ch_link = $1
+		WHERE id = $2
+	`
+	_, err := s.Exec(q, chLink, botId)
+	if err != nil {
+		return fmt.Errorf("EditBotChLink: err: %v", err)
+	}
+	return nil
+}
+
 func (s *Database) EditBotGroupLinkIdToNull(groupLinkId int) error {
 	q := `
 		UPDATE bots SET 

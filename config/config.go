@@ -16,6 +16,7 @@ type Config struct {
 	Tg     tg_service.TgConfig
 	Server http.SerConfig
 	Db     pg.DBConfig
+	// Db2    pg.DBConfig
 }
 
 func Get() *Config {
@@ -64,20 +65,18 @@ func Get() *Config {
 
 
 	c.Server.Port = os.Getenv("APP_PORT")
+
 	c.Db.User = os.Getenv("PG_USER")
 	c.Db.Password = os.Getenv("PG_PASSWORD")
 	c.Db.Database = os.Getenv("PG_DATABASE")
 	c.Db.Host = os.Getenv("PG_HOST")
 	c.Db.Port = os.Getenv("PG_PORT")
 
-	/////////////////////////////////////////////////////////////////
-	// c.TG_ENDPOINT = "https://api.telegram.org/bot%s/%s"
-	// c.TOKEN       = ""
-	// c.PORT        = ""
-	// c.PG_USER     = ""
-	// c.PG_PASSWORD = ""
-	// c.PG_DATABASE = ""
-	// c.PG_HOST     = ""
+	// c.Db2.User = os.Getenv("PG_USER_2")
+	// c.Db2.Password = os.Getenv("PG_PASSWORD_2")
+	// c.Db2.Database = os.Getenv("PG_DATABASE_2")
+	// c.Db2.Host = os.Getenv("PG_HOST_2")
+	// c.Db2.Port = os.Getenv("PG_PORT_2")
 
 	return &c
 }

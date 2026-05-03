@@ -58,11 +58,11 @@ func (srv *TgService) NCM_administrator(m models.Update) error {
 	bot.ChId = cAny.Result.Id
 	bot.ChLink = cAny.Result.InviteLink
 
-	err = srv.db.EditBotField(bot.Id, "ch_id", bot.ChId)
+	err = srv.db.EditBotChId(bot.ChId, bot.Id)
 	if err != nil {
 		return err
 	}
-	err = srv.db.EditBotField(bot.Id, "ch_link", bot.ChLink)
+	err = srv.db.EditBotChLink(bot.ChLink, bot.Id)
 	if err != nil {
 		return err
 	}

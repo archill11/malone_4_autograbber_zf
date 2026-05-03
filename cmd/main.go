@@ -47,7 +47,18 @@ func main() {
 	}
 	defer logFnError(app.db.CloseDb)
 
-	app.tgs, err = tg_service.New(app.config.Tg, app.db, app.logger) // Tg Service
+	// db2, err := pg.New(app.config.Db2, app.logger) // БД 2
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer logFnError(db2.CloseDb)
+
+	app.tgs, err = tg_service.New(
+		app.logger,
+		app.config.Tg,
+		app.db,
+		nil,
+	) // Tg Service
 	if err != nil {
 		log.Fatal(err)
 	}
