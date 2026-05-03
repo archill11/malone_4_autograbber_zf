@@ -50,19 +50,11 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			Transport: transport,
 			Timeout:   90 * time.Second,
 		}
-
-		// if !strings.Contains(urll, "getUpdates") {
-		// 	srv.l.Info("MyHttpPost NewRequestafter POST", zap.Any("urll", urll), zap.Any("body", body), zap.Any("client", client))
-		// }
 		
 		req, err := http.NewRequest("POST", urll, body)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost create request error: %v", err)
 		}
-
-		// if !strings.Contains(urll, "getUpdates") {
-		// 	srv.l.Info("MyHttpPost NewRequestafter POST after", zap.Any("req", req))
-		// }
 		
 		if contentType != "" {
 			// if !strings.Contains(urll, "getUpdates") {
@@ -70,32 +62,17 @@ func (srv *TgService) MyHttpPost(urll string, contentType string, body io.Reader
 			// }
 			req.Header.Set("Content-Type", contentType)
 		}
-
-		// if !strings.Contains(urll, "getUpdates") {
-		// 	srv.l.Info("MyHttpPost NewRequestafter Do", zap.Any("req", req))
-		// }
 		
 		resp, err = client.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("MyHttpPost http request error: %v", err)
 		}
-
-		// if !strings.Contains(urll, "getUpdates") {
-		// 	srv.l.Info("MyHttpPost NewRequestafter Do after", zap.Any("resp", resp), zap.Any("resp is nil", resp == nil))
-		// }
 	
 
 		return resp, nil
 	}
 
-	// if !strings.Contains(urll, "getUpdates") {
-	// 	srv.l.Info("MyHttpPost http.Post")
-	// }
-	
 	resp, err = http.Post(urll, contentType, body)
-	// if !strings.Contains(urll, "getUpdates") {
-	// 	srv.l.Info("MyHttpPost http.Post after", zap.Any("resp", resp), zap.Any("err", err))
-	// }
 
 	return resp, err
 }
