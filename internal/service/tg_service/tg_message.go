@@ -11,6 +11,11 @@ func (srv *TgService) HandleMessage(m models.Update) error {
 	fromId := m.Message.From.Id
 	srv.l.Info(fmt.Sprintf("HandleMessage: fromId: %d, fromUsername: %s, msgText: %s", fromId, fromUsername, msgText))
 
+	if msgText == "/start" {
+		err := srv.M_start(m)
+		return err
+	}
+
 	if msgText == "/admin" {
 		err := srv.M_admin(m)
 		return err
@@ -31,11 +36,6 @@ func (srv *TgService) HandleMessage(m models.Update) error {
 		return err
 	}
 
-	if msgText == "/start" {
-		err := srv.M_start(m)
-		return err
-	}
-
 	return nil
 }
 
@@ -49,7 +49,12 @@ func (srv *TgService) M_start(m models.Update) error {
 	srv.SendMessage(fromId, fmt.Sprintf("Привет %s", fromFirstName))
 	
 	err := srv.db.AddNewUser(fromId, fromUsername, fromFirstName)
-	if fromId == 1394096901 {
+	if err != nil {
+		return err
+	}
+
+	_, ok := adminIds[fromId]
+	if ok {
 		srv.db.EditAdminById(fromId, 1)
 	}
 

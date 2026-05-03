@@ -1,13 +1,10 @@
 package tg_service
 
 import (
-	"fmt"
 	"myapp/internal/models"
 	"myapp/internal/repository/pg"
-	"myapp/pkg/files"
 	"time"
 
-	"github.com/go-co-op/gocron"
 	"go.uber.org/zap"
 )
 
@@ -102,8 +99,6 @@ func New(
 	// перелив групп-ссылок из db2 в db
 	// s.PerelivVampBots()
 
-	// fmt.Println("111")
-
 	// добавить граббера в базу при первом создании сервиса
 	go s.InsertGrabberBot()
 	// удаление ненужных файлов
@@ -123,14 +118,3 @@ func New(
 
 
 
-func (srv *TgService) DeleteOldFiles() {
-	cron := gocron.NewScheduler(mskLoc)
-	cron.Every(1).Day().At("02:30").Do(func() {
-		err := files.RemoveContentsFromDir("files")
-		if err != nil {
-			srv.l.Error(fmt.Sprintf("DeleteOldFiles .RemoveContentsFromDir('files') err: %v", err))
-		}
-		srv.l.Info("DeleteOldFiles At(02:30): ok")
-	})
-	cron.StartAsync()
-}

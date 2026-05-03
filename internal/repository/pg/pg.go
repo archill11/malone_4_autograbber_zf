@@ -39,12 +39,16 @@ type (
 	}
 
 	Database struct {
-		db *pgxpool.Pool
 		l  *zap.Logger
+		Cfg  DBConfig
+		db *pgxpool.Pool
 	}
 )
 
-func New(config DBConfig, l *zap.Logger) (*Database, error) {
+func New(
+	config DBConfig,
+	l *zap.Logger,
+) (*Database, error) {
 	ctx := context.Background()
 
 	databaseURI := fmt.Sprintf(
@@ -74,6 +78,7 @@ func New(config DBConfig, l *zap.Logger) (*Database, error) {
 	storage := &Database{
 		db: db,
 		l:  l,
+		Cfg:  config,
 	}
 	return storage, nil
 }

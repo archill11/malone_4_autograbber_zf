@@ -120,48 +120,43 @@ func (srv *TgService) GetTgBotUpdates() {
 		Timeout: 30,
 		Buffer:  1000,
 	}
-	updates, _ := srv.GetUpdatesChan(&updConf, srv.Cfg.Token)
+
+	updates := srv.GetUpdatesChan(&updConf, srv.Cfg.Token)
 	for update := range updates {
 		srv.bot_Update(update)
 	}
 }
 
-func (srv *TgService) GetUpdatesChan(conf *UpdateConfig, token string) (chan models.Update, chan struct{}) {
+func (srv *TgService) GetUpdatesChan(conf *UpdateConfig, token string) chan models.Update {
 	UpdCh := make(chan models.Update, conf.Buffer)
-	shutdownCh := make(chan struct{})
 
 	go func() {
 		for {
-			select {
-			case <-shutdownCh:
-				close(UpdCh)
-				return
-			default:
-				logMess := fmt.Sprintf(srv.Cfg.TgEndp, token, "getUpdates")
-				fmt.Println(logMess)
-				updates, err := srv.GetUpdates(conf.Offset, conf.Timeout, token)
-				if err != nil {
-					// srv.l.Error(fmt.Sprintf("GetUpdatesChan GetUpdates err: %v", err))
-					// srv.l.Error("Failed to get updates, retrying in 4 seconds...")
-					fmt.Println("Failed to get updates, retrying in 4 seconds...")
-					time.Sleep(time.Second * 4)
-					continue
-				}
+			logMess := fmt.Sprintf(srv.Cfg.TgEndp, token, "getUpdates")
+			fmt.Println(logMess)
 
-				for _, update := range updates {
-					if update.UpdateId >= conf.Offset {
-						conf.Offset = update.UpdateId + 1
-						UpdCh <- update
-					}
+			updates, err := srv.GetUpdates(conf.Offset, conf.Timeout, token)
+			if err != nil {
+				fmt.Println("Failed to get updates, retrying in 4 seconds...")
+				time.Sleep(time.Second * 4)
+				continue
+			}
+
+			for _, update := range updates {
+				if update.UpdateId >= conf.Offset {
+					conf.Offset = update.UpdateId + 1
+					UpdCh <- update
 				}
 			}
 		}
 	}()
-	return UpdCh, shutdownCh
+
+	return UpdCh
 }
 
 func (srv *TgService) bot_Update(m models.Update) error {
 	srv.l.Info("	NEW TG Update")
+
 	if m.ChannelPost != nil { // on Channel_Post
 		go func() {
 			err := srv.Donor_HandleChannelPost(m)
@@ -289,6 +284,7 @@ func (srv *TgService) DeleteLostBots() {
 
 func (srv *TgService) InsertGrabberBot() {
 	time.Sleep(time.Second * 4)
+
 	bots, err := srv.db.GetAllBots()
 	if err != nil {
 		err = fmt.Errorf("InsertGrabberBot GetAllBots err: %v", err)

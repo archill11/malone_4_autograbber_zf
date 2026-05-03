@@ -58,12 +58,15 @@ func main() {
 		app.config.Tg,
 		app.db,
 		nil,
-	) // Tg Service
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	app.server, err = api.New(app.config.Server, app.logger) // api server
+	app.server, err = api.New(
+		app.logger,
+		app.config.Server,
+	) // api server
 	if err != nil {
 		log.Fatal(err)
 	}

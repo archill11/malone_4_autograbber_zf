@@ -13,13 +13,16 @@ type (
 	}
 
 	APIServer struct {
-		Server *fiber.App
 		l      *zap.Logger
+		Server *fiber.App
 		sem    chan struct{}
 	}
 )
 
-func New(conf SerConfig, l *zap.Logger) (*APIServer, error) {
+func New(
+	l *zap.Logger,
+	conf SerConfig,
+) (*APIServer, error) {
 	app := fiber.New()
 	ser := &APIServer{
 		Server: app,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"myapp/internal/entity"
 	"myapp/internal/models"
+	"myapp/pkg/files"
 	"net/url"
 	"sort"
 	"strconv"
@@ -11,8 +12,24 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
+	"github.com/go-co-op/gocron"
 	"go.uber.org/zap"
 )
+
+func (srv *TgService) DeleteOldFiles() {
+	cron := gocron.NewScheduler(mskLoc)
+
+	cron.Every(1).Day().At("02:30").Do(func() {
+		err := files.RemoveContentsFromDir("files")
+		if err != nil {
+			srv.l.Error(fmt.Sprintf("DeleteOldFiles .RemoveContentsFromDir('files') err: %v", err))
+		}
+
+		srv.l.Info("DeleteOldFiles At(02:30): ok")
+	})
+
+	cron.StartAsync()
+}
 
 func isValidUTF16EntityBoundary(text string, start, length int) bool {
 	if start < 0 || length <= 0 {
