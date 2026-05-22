@@ -61,6 +61,11 @@ func New(
 		return nil, err
 	}
 
+	err = db.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	queries := []string{
 		posts_schema,
 		bots_schema,
@@ -89,6 +94,10 @@ func (s *Database) CloseDb() error {
 	return nil
 }
 
+func (s *Database) Ping() error {
+	return s.db.Ping(context.Background())
+}
+
 func (s *Database) Exec(sql string, arguments ...any) (pgconn.CommandTag, error) {
 	return s.db.Exec(context.Background(), sql, arguments...)
 }
@@ -99,4 +108,16 @@ func (s *Database) QueryRow(sql string, arguments ...any) pgx.Row {
 
 func (s *Database) Query(sql string, arguments ...any) (pgx.Rows, error) {
 	return s.db.Query(context.Background(), sql, arguments...)
+}
+
+func (s *Database) BeginTx(txOptions pgx.TxOptions) (pgx.Tx, error) {
+	return s.db.BeginTx(context.Background(), txOptions)
+}
+
+func (s *Database) BeginFunc(f func(pgx.Tx) error) error {
+	return s.db.BeginFunc(context.Background(), f)
+}
+
+func (s *Database) BeginTxFunc(txOptions pgx.TxOptions, f func(pgx.Tx) error) error {
+	return s.db.BeginTxFunc(context.Background(), txOptions, f)
 }
