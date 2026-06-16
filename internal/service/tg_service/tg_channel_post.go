@@ -648,7 +648,9 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 	if sendMediaResp.ErrorCode != 0 {
 		dbErr := srv.db.AddNewTgError(vampBot.Id, vampBot.Token, vampBot.Username, vampBot.ChId, sendMediaResp.BotErrResp.Description)
 		if dbErr != nil {
-			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError dbErr", zap.Error(dbErr))
+			srv.l.Error("sendChPostAsVamp_Video_or_Photo AddNewTgError dbErr",
+				zap.Error(dbErr),
+			)
 		}
 
 		errStr := fmt.Sprintf("err: %v | %v\n\n", sendMediaResp.BotErrResp.ErrorCode, sendMediaResp.BotErrResp.Description)
@@ -669,7 +671,9 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo AddNewPost dbErr: %v", dbErr), errLink
 		}
 	} else {
-		srv.l.Info(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp.BotErrResp))
+		srv.l.Info(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp.BotErrResp),
+			zap.Any("url", url),
+		)
 		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp.BotErrResp), errLink
 	}
 
