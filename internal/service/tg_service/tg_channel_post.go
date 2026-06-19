@@ -671,10 +671,11 @@ func (srv *TgService) sendChPostAsVamp_Video_or_Photo(vampBot entity.Bot, m mode
 			return fmt.Errorf("sendChPostAsVamp_Video_or_Photo AddNewPost dbErr: %v", dbErr), errLink
 		}
 	} else {
-		srv.l.Info(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp.BotErrResp),
+		srv.l.Warn(fmt.Sprintf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp.BotErrResp),
 			zap.Any("url", url),
+			zap.Any("sendMediaResp", sendMediaResp),
+
 		)
-		return fmt.Errorf("sendChPostAsVamp_Video_or_Photo: Post resp err: %+v", sendMediaResp.BotErrResp), errLink
 	}
 
 	return nil, errLink
