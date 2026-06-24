@@ -357,6 +357,20 @@ func (srv *TgService) DeleteMessage(chat, messId int, token string) error {
 	}
 	return nil
 }
+func (srv *TgService) PinChatMessage(chat, messId int, token string) error {
+	json_data, err := json.Marshal(map[string]any{
+		"chat_id":    strconv.Itoa(chat),
+		"message_id": strconv.Itoa(messId),
+	})
+	if err != nil {
+		return err
+	}
+	err = srv.sendData_v2(json_data, token, "pinChatMessage")
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (srv *TgService) EditMessageText(json_data []byte, botToken string) error {
 	err := srv.sendData_v2(json_data, botToken, "editMessageText")

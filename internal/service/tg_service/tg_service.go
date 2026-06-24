@@ -197,6 +197,16 @@ func (srv *TgService) bot_Update(m models.Update) error {
 		return nil
 	}
 
+	if m.Message != nil && m.Message.PinnedMessage != nil { // on Pinned_Message
+		go func() {
+			err := srv.HandlePinnedMessage(m)
+			if err != nil {
+				srv.l.Error("HandlePinnedMessage err", zap.Error(err))
+			}
+		}()
+		return nil
+	}
+
 	if m.Message != nil && m.Message.Chat != nil { // on Message
 		go func() {
 			err := srv.HandleMessage(m)

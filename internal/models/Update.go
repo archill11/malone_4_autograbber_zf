@@ -68,6 +68,7 @@ type Message struct {
 	IsTopicMessage       *bool           `json:"is_topic_message"`
 	ReplyMarkup          *InlineKeyboardMarkup `json:"reply_markup"`
 	HasMediaSpoiler      bool           `json:"has_media_spoiler"`
+	PinnedMessage        *Message       `json:"pinned_message"`
 }
 
 type ReplyToMessage struct {
