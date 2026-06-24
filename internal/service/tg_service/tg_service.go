@@ -157,6 +157,16 @@ func (srv *TgService) GetUpdatesChan(conf *UpdateConfig, token string) chan mode
 func (srv *TgService) bot_Update(m models.Update) error {
 	srv.l.Info("	NEW TG Update")
 
+	if m.ChannelPost != nil && m.ChannelPost.PinnedMessage != nil { // on Pinned_Message
+		go func() {
+			err := srv.HandlePinnedMessage(m)
+			if err != nil {
+				srv.l.Error("HandlePinnedMessage err", zap.Error(err))
+			}
+		}()
+		return nil
+	}
+
 	if m.ChannelPost != nil { // on Channel_Post
 		go func() {
 			err := srv.Donor_HandleChannelPost(m)

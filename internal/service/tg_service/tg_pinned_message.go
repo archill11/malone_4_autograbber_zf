@@ -9,10 +9,25 @@ import (
 )
 
 func (srv *TgService) HandlePinnedMessage(m models.Update) error {
-	pm := m.Message.PinnedMessage
-	pmMessageId := pm.MessageId
-	fromUsername := m.Message.From.UserName
-	fromId := m.Message.From.Id
+	var pmP *models.Message
+	var fromId int
+	var fromUsername string
+	var pmMessageId int
+
+	if m.Message != nil && m.Message.PinnedMessage != nil {
+		pmP = m.Message.PinnedMessage
+		fromId = m.Message.From.Id
+		fromUsername = m.Message.From.UserName
+		pmMessageId = pmP.MessageId
+	} else if m.ChannelPost != nil && m.ChannelPost.PinnedMessage != nil {
+		pmP = m.ChannelPost.PinnedMessage
+		fromId = m.ChannelPost.From.Id
+		fromUsername = m.ChannelPost.From.UserName
+		pmMessageId = pmP.MessageId
+	} else {
+		return fmt.Errorf("HandlePinnedMessage: no pinned message found")
+	}
+
 	srv.l.Info(fmt.Sprintf("HandlePinnedMessage: fromId: %d, fromUsername: %s, pmMessageId: %d",
 		fromId, fromUsername, pmMessageId),
 	)
