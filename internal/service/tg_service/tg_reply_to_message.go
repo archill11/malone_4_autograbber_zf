@@ -445,14 +445,15 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 			bot, err := srv.db.GetBotInfoById(botId)
 			if err != nil {
 				srv.SendMessage(fromId, ERR_MSG)
-				return err
+				return fmt.Errorf("RM_add_ch_to_bot_spet2 GetBotInfoById err: %v", err)
 			}
 
 			var additionalChs []entity.AdditionalCh
 			err = json.Unmarshal(bot.AdditionalChs, &additionalChs)
 			if err != nil {
 				srv.SendMessage(fromId, ERR_MSG)
-				return err
+				srv.l.Error(fmt.Sprintf("RM_add_ch_to_bot_spet2 Marshal err: %v", err), zap.Any("bot.AdditionalChs", bot.AdditionalChs))
+				return fmt.Errorf("RM_add_ch_to_bot_spet2 Unmarshal err: %v", err)
 			}
 
 			additionalChs = append(additionalChs, entity.AdditionalCh{ChId: botChId, ChLink: botChLink})
@@ -460,13 +461,15 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 			additionalChsJson, err := json.Marshal(additionalChs)
 			if err != nil {
 				srv.SendMessage(fromId, ERR_MSG)
-				return err
+				srv.l.Error(fmt.Sprintf("RM_add_ch_to_bot_spet2 Marshal err: %v", err), zap.Any("additionalChs", additionalChs))
+				return fmt.Errorf("RM_add_ch_to_bot_spet2 Marshal err: %v", err)
 			}
 
 			err = srv.db.EditBotAdditionalChs(bot.Id, additionalChsJson)
 			if err != nil {
 				srv.SendMessage(fromId, ERR_MSG)
-				return err
+				srv.l.Error(fmt.Sprintf("RM_add_ch_to_bot_spet2 Marshal err: %v", err), zap.Any("additionalChsJson", additionalChsJson))
+				return fmt.Errorf("RM_add_ch_to_bot_spet2 EditBotAdditionalChs err: %v", err)
 			}
 
 			srv.SendMessage(fromId, fmt.Sprintf("ДОП канал %d привязанна к боту %d", chId, botId))
