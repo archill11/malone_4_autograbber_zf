@@ -148,6 +148,9 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
 		// }
 		for _, additionalCh := range vampBot.AdditionalChs {
+			if additionalCh.ChId == 0 {
+				continue
+			}
 			var botWithOtherCh entity.Bot
 			mycopy.DeepCopy(vampBot, &botWithOtherCh)
 			botWithOtherCh.ChId = additionalCh.ChId
@@ -956,6 +959,9 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
 		// }
 		for _, additionalCh := range vampBot.AdditionalChs {
+			if additionalCh.ChId == 0 {
+				continue
+			}
 			var botWithOtherCh entity.Bot
 			mycopy.DeepCopy(vampBot, &botWithOtherCh)
 			botWithOtherCh.ChId = additionalCh.ChId
