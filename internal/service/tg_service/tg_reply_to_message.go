@@ -449,12 +449,14 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 			}
 
 			var additionalChs []entity.AdditionalCh
-			err = json.Unmarshal(bot.AdditionalChs, &additionalChs)
-			if err != nil {
-				srv.SendMessage(fromId, ERR_MSG)
-				srv.l.Error(fmt.Sprintf("RM_add_ch_to_bot_spet2 Marshal err: %v", err), zap.Any("bot.AdditionalChs", bot.AdditionalChs))
-				return fmt.Errorf("RM_add_ch_to_bot_spet2 Unmarshal err: %v", err)
-			}
+			// err = json.Unmarshal(bot.AdditionalChs, &additionalChs)
+			// if err != nil {
+			// 	srv.SendMessage(fromId, ERR_MSG)
+			// 	srv.l.Error(fmt.Sprintf("RM_add_ch_to_bot_spet2 Marshal err: %v", err), zap.Any("bot.AdditionalChs", bot.AdditionalChs))
+			// 	return fmt.Errorf("RM_add_ch_to_bot_spet2 Unmarshal err: %v", err)
+			// }
+
+			additionalChs = bot.AdditionalChs
 
 			additionalChs = append(additionalChs, entity.AdditionalCh{ChId: botChId, ChLink: botChLink})
 
