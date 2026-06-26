@@ -391,11 +391,11 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 	for i, chIdStr := range chIdsArr {
 		chIdStr = strings.TrimSpace(chIdStr)
 		if strings.HasPrefix(chIdStr, "100") || strings.HasPrefix(chIdStr, "-100") {
-			replyMes = strings.Replace(replyMes, "-", "", 1)
-			replyMes = strings.Replace(replyMes, "100", "", 1)
+			chIdStr = strings.Replace(chIdStr, "-", "", 1)
+			chIdStr = strings.Replace(chIdStr, "100", "", 1)
 		}
 
-		chId, err := strconv.Atoi("-100" + replyMes)
+		chId, err := strconv.Atoi("-100" + chIdStr)
 		if err != nil {
 			srv.SendMessage(fromId, fmt.Sprintf("%s: %v", ERR_MSG, err))
 			return err
