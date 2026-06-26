@@ -142,12 +142,12 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	for _, vampBot := range allVampBots {
 		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
 
-		var additionalChs []entity.AdditionalCh
-		err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
-		if err != nil {
-			return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
-		}
-		for _, additionalCh := range additionalChs {
+		// var additionalChs []entity.AdditionalCh
+		// err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
+		// if err != nil {
+		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
+		// }
+		for _, additionalCh := range vampBot.AdditionalChs {
 			var botWithOtherCh entity.Bot
 			mycopy.DeepCopy(vampBot, &botWithOtherCh)
 			botWithOtherCh.ChId = additionalCh.ChId
@@ -950,12 +950,12 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 	for _, vampBot := range allVampBots {
 		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
 
-		var additionalChs []entity.AdditionalCh
-		err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
-		if err != nil {
-			return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
-		}
-		for _, additionalCh := range additionalChs {
+		// var additionalChs []entity.AdditionalCh
+		// err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
+		// if err != nil {
+		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
+		// }
+		for _, additionalCh := range vampBot.AdditionalChs {
 			var botWithOtherCh entity.Bot
 			mycopy.DeepCopy(vampBot, &botWithOtherCh)
 			botWithOtherCh.ChId = additionalCh.ChId
