@@ -448,6 +448,8 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 				return fmt.Errorf("RM_add_ch_to_bot_spet2 GetBotInfoById err: %v", err)
 			}
 
+			srv.l.Info("RM_add_ch_to_bot_spet2", zap.Any("bot.AdditionalChs", bot.AdditionalChs))
+
 			var additionalChs []entity.AdditionalCh
 			// err = json.Unmarshal(bot.AdditionalChs, &additionalChs)
 			// if err != nil {
