@@ -137,7 +137,26 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	errorLinks := make([]string, 0)
 
-	for i, vampBot := range allVampBots {
+	// если бот имеет доп каналы, то добавляем их в массив
+	augmentedAllVampBots := make([]entity.Bot, 0)
+	for _, vampBot := range allVampBots {
+		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
+
+		var additionalChs []entity.AdditionalCh
+		err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
+		if err != nil {
+			return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
+		}
+		for _, additionalCh := range additionalChs {
+			var botWithOtherCh entity.Bot
+			mycopy.DeepCopy(vampBot, &botWithOtherCh)
+			botWithOtherCh.ChId = additionalCh.ChId
+			botWithOtherCh.ChLink = additionalCh.ChLink
+			augmentedAllVampBots = append(augmentedAllVampBots, botWithOtherCh)
+		}
+	}
+
+	for i, vampBot := range augmentedAllVampBots {
 		botRefka := vampBot.GroupLinkId
 		if srv.Cfg.IsMultiGrabber == 1 && vampBot.DonorChId != 0 && vampBot.DonorChId != channel_id {
 			continue // бот не подвязан к этому донор каналу
@@ -189,7 +208,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 
 	srv.SendFinalReport(
 		channel_id, message_id,
-		postUUID, allVampBots,
+		postUUID, augmentedAllVampBots,
 		okSend, notOkSend, ChId0, IsDisable,
 		errorLinks,
 	)
@@ -926,11 +945,30 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		s.db.EditCfgVal(entity.Is_sending_now_CfgId, "0")
 	}()
 
+	// если бот имеет доп каналы, то добавляем их в массив
+	augmentedAllVampBots := make([]entity.Bot, 0)
+	for _, vampBot := range allVampBots {
+		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
+
+		var additionalChs []entity.AdditionalCh
+		err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
+		if err != nil {
+			return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
+		}
+		for _, additionalCh := range additionalChs {
+			var botWithOtherCh entity.Bot
+			mycopy.DeepCopy(vampBot, &botWithOtherCh)
+			botWithOtherCh.ChId = additionalCh.ChId
+			botWithOtherCh.ChLink = additionalCh.ChLink
+			augmentedAllVampBots = append(augmentedAllVampBots, botWithOtherCh)
+		}
+	}
+
 	var okSend int
 	var notOkSend int
 	var IsDisable int
 	var ChId0 int
-	for _, vampBot := range allVampBots {
+	for _, vampBot := range augmentedAllVampBots {
 		if vampBot.ChId == 0 {
 			ChId0++
 			continue
@@ -1073,7 +1111,7 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 		zap.Any("s.MediaStore.MediaGroups", s.MediaStore.MediaGroups),
 	)
 
-	s.SendReportAboutSendingMediaGroup(len(allVampBots), okSend, notOkSend, ChId0, IsDisable)
+	s.SendReportAboutSendingMediaGroup(len(augmentedAllVampBots), okSend, notOkSend, ChId0, IsDisable)
 
 	return nil
 }

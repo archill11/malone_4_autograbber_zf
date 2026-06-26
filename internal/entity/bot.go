@@ -19,5 +19,12 @@ type Bot struct {
 	ToClickShortLink         string `json:"to_click_short_link"`
 	ToClickShortLinkToLichka string `json:"to_click_short_link_to_lichka"`
 
+	AdditionalChs []byte `json:"additional_chs"`
+
 	ShortDomenToReplace string `json:"short_domen_to_replace"`
+}
+
+type AdditionalCh struct {
+	ChId   int    `json:"ch_id"`
+	ChLink string `json:"ch_link"`
 }

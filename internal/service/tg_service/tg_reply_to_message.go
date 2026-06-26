@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"myapp/internal/entity"
 	"myapp/internal/models"
 	"strconv"
 	"strings"
@@ -375,17 +376,7 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 	fromId := m.Message.From.Id
 	fromUsername := m.Message.From.UserName
 	srv.l.Info(fmt.Sprintf("RM_add_ch_to_bot_spet2: fromId: %d fromUsername: %s, replyMes: %s", fromId, fromUsername, replyMes))
-	replyMes = strings.TrimSpace(replyMes)
-	if strings.HasPrefix(replyMes, "100") || strings.HasPrefix(replyMes, "-100") {
-		replyMes = strings.Replace(replyMes, "-", "", 1)
-		replyMes = strings.Replace(replyMes, "100", "", 1)
-	}
 
-	chId, err := strconv.Atoi("-100" + replyMes)
-	if err != nil {
-		srv.SendMessage(fromId, fmt.Sprintf("%s: %v", ERR_MSG, err))
-		return err
-	}
 	bot, err := srv.db.GetBotInfoById(botId)
 	if err != nil {
 		srv.SendMessage(fromId, ERR_MSG)
@@ -396,44 +387,91 @@ func (srv *TgService) RM_add_ch_to_bot_spet2(m models.Update, botId int) error {
 		return nil
 	}
 
-	json_data, err := json.Marshal(map[string]any{
-		"chat_id": strconv.Itoa(chId),
-	})
-	if err != nil {
-		return err
-	}
-	resp, err := srv.MyHttpPost(
-		fmt.Sprintf(srv.Cfg.TgEndp, bot.Token, "getChat"),
-		"application/json",
-		bytes.NewBuffer(json_data),
-	)
-	if err != nil {
-		return fmt.Errorf("RM_add_ch_to_bot_spet2 POSt getChat err: %v", err)
-	}
-	defer resp.Body.Close()
+	chIdsArr := strings.Fields(replyMes)
+	for i, chIdStr := range chIdsArr {
+		chIdStr = strings.TrimSpace(chIdStr)
+		if strings.HasPrefix(chIdStr, "100") || strings.HasPrefix(chIdStr, "-100") {
+			replyMes = strings.Replace(replyMes, "-", "", 1)
+			replyMes = strings.Replace(replyMes, "100", "", 1)
+		}
 
-	var j models.ApiBotResp
-	if err := json.NewDecoder(resp.Body).Decode(&j); err != nil {
-		return fmt.Errorf("RM_add_ch_to_bot_spet2 NewDecoder err: %v", err)
-	}
+		chId, err := strconv.Atoi("-100" + replyMes)
+		if err != nil {
+			srv.SendMessage(fromId, fmt.Sprintf("%s: %v", ERR_MSG, err))
+			return err
+		}
+		
+		json_data, err := json.Marshal(map[string]any{
+			"chat_id": strconv.Itoa(chId),
+		})
+		if err != nil {
+			return err
+		}
+		resp, err := srv.MyHttpPost(
+			fmt.Sprintf(srv.Cfg.TgEndp, bot.Token, "getChat"),
+			"application/json",
+			bytes.NewBuffer(json_data),
+		)
+		if err != nil {
+			return fmt.Errorf("RM_add_ch_to_bot_spet2 POSt getChat err: %v", err)
+		}
+		defer resp.Body.Close()
+	
+		var j models.ApiBotResp
+		if err := json.NewDecoder(resp.Body).Decode(&j); err != nil {
+			return fmt.Errorf("RM_add_ch_to_bot_spet2 NewDecoder err: %v", err)
+		}
+		if !j.Ok {
+			return fmt.Errorf("RM_add_ch_to_bot_spet2 !j.Ok error: %v, ch_id %d", j.Description, chId)
+		}
+		if i == 0 {
+			bot.ChId = j.Result.Id
+			bot.ChLink = j.Result.InviteLink
+			err = srv.db.EditBotChId(bot.ChId, bot.Id)
+			if err != nil {
+				srv.SendMessage(fromId, ERR_MSG)
+				return err
+			}
+			err = srv.db.EditBotChLink(bot.ChLink, bot.Id)
+			if err != nil {
+				srv.SendMessage(fromId, ERR_MSG)
+				return err
+			}
+			srv.SendMessage(fromId, fmt.Sprintf("канал %d привязанна к боту %d", chId, botId))
+		} else {
+			botChId := j.Result.Id
+			botChLink := j.Result.InviteLink
 
-	if !j.Ok {
-		return fmt.Errorf("RM_add_ch_to_bot_spet2 !j.Ok error: %v, ch_id %d", j.Description, chId)
-	}
+			bot, err := srv.db.GetBotInfoById(botId)
+			if err != nil {
+				srv.SendMessage(fromId, ERR_MSG)
+				return err
+			}
 
-	bot.ChId = j.Result.Id
-	bot.ChLink = j.Result.InviteLink
-	err = srv.db.EditBotChId(bot.ChId, bot.Id)
-	if err != nil {
-		srv.SendMessage(fromId, ERR_MSG)
-		return err
+			var additionalChs []entity.AdditionalCh
+			err = json.Unmarshal(bot.AdditionalChs, &additionalChs)
+			if err != nil {
+				srv.SendMessage(fromId, ERR_MSG)
+				return err
+			}
+
+			additionalChs = append(additionalChs, entity.AdditionalCh{ChId: botChId, ChLink: botChLink})
+
+			additionalChsJson, err := json.Marshal(additionalChs)
+			if err != nil {
+				srv.SendMessage(fromId, ERR_MSG)
+				return err
+			}
+
+			err = srv.db.EditBotAdditionalChs(bot.Id, additionalChsJson)
+			if err != nil {
+				srv.SendMessage(fromId, ERR_MSG)
+				return err
+			}
+
+			srv.SendMessage(fromId, fmt.Sprintf("ДОП канал %d привязанна к боту %d", chId, botId))
+		}
 	}
-	err = srv.db.EditBotChLink(bot.ChLink, bot.Id)
-	if err != nil {
-		srv.SendMessage(fromId, ERR_MSG)
-		return err
-	}
-	srv.SendMessage(fromId, fmt.Sprintf("канал %d привязанна к боту %d", chId, botId))
 
 	if srv.Cfg.IsMultiGrabber == 1 {
 		srv.SendForceReply(fromId, fmt.Sprintf("укажите id канала донора для этого бота: %d", bot.Id))

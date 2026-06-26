@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS bots (
     to_click_short_link_to_lichka TEXT DEFAULT '',
     short_domen_to_replace        TEXT DEFAULT '',
 
+    additional_chs JSONB DEFAULT '[]',
+
     PRIMARY KEY (id, token)
 );
 
@@ -27,4 +29,8 @@ CREATE TABLE IF NOT EXISTS bots (
 
 ALTER TABLE bots
   ADD COLUMN IF NOT EXISTS short_domen_to_replace TEXT DEFAULT '';
+-------------------------------------------
+
+ALTER TABLE bots
+  ADD COLUMN IF NOT EXISTS additional_chs JSONB DEFAULT '[]';
 

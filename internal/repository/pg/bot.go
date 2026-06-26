@@ -417,3 +417,20 @@ func (s *Database) EditBotShortDomenToReplace(
 	}
 	return nil
 }
+
+func (s *Database) EditBotAdditionalChs(
+	botId int,
+	additional_chs []byte,
+) error {
+	q := `
+		UPDATE bots SET
+			additional_chs = $1
+		WHERE id = $2
+	`
+	_, err := s.Exec(q, additional_chs, botId)
+	if err != nil {
+		return fmt.Errorf("EditBotAdditionalChs: err: %v", err)
+
+	}
+	return nil
+}
