@@ -798,7 +798,8 @@ func (srv *TgService) RM_delete_post_in_chs(m models.Update) error {
 	if err != nil {
 		return fmt.Errorf("RM_delete_post_in_chs GetAllVampBots err : %v", err)
 	}
-	for i, vampBot := range allVampBots {
+	augmentedAllVampBots := srv.GetAugmentedVampBots(allVampBots)
+	for i, vampBot := range augmentedAllVampBots {
 		if vampBot.ChId == 0 {
 			continue
 		}

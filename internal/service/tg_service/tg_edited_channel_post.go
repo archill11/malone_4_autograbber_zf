@@ -39,7 +39,8 @@ func (srv *TgService) Donor_EditEditedChannelPost(m models.Update) error {
 	if err != nil {
 		return err
 	}
-	for i, vampBot := range allVampBots {
+	augmentedAllVampBots := srv.GetAugmentedVampBots(allVampBots)
+	for i, vampBot := range augmentedAllVampBots {
 		if vampBot.ChId == 0 {
 			continue
 		}

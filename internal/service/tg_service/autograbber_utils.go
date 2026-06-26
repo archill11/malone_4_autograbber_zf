@@ -5,6 +5,7 @@ import (
 	"myapp/internal/entity"
 	"myapp/internal/models"
 	"myapp/pkg/files"
+	"myapp/pkg/mycopy"
 	"net/url"
 	"sort"
 	"strconv"
@@ -552,3 +553,27 @@ func (srv *TgService) GetPostAndChFromLink(link string) (string, string, error) 
 	return "", "", nil
 }
 
+func (srv *TgService) GetAugmentedVampBots(allVampBots []entity.Bot) ([]entity.Bot) {
+	augmentedAllVampBots := make([]entity.Bot, 0)
+	for _, vampBot := range allVampBots {
+		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
+
+		// var additionalChs []entity.AdditionalCh
+		// err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
+		// if err != nil {
+		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
+		// }
+		for _, additionalCh := range vampBot.AdditionalChs {
+			if additionalCh.ChId == 0 {
+				continue
+			}
+			var botWithOtherCh entity.Bot
+			mycopy.DeepCopy(vampBot, &botWithOtherCh)
+			botWithOtherCh.ChId = additionalCh.ChId
+			botWithOtherCh.ChLink = additionalCh.ChLink
+			augmentedAllVampBots = append(augmentedAllVampBots, botWithOtherCh)
+		}
+	}
+
+	return augmentedAllVampBots
+}

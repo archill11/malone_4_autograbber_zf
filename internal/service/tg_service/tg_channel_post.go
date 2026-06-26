@@ -138,26 +138,7 @@ func (srv *TgService) Donor_addChannelPost(m models.Update) error {
 	errorLinks := make([]string, 0)
 
 	// если бот имеет доп каналы, то добавляем их в массив
-	augmentedAllVampBots := make([]entity.Bot, 0)
-	for _, vampBot := range allVampBots {
-		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
-
-		// var additionalChs []entity.AdditionalCh
-		// err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
-		// if err != nil {
-		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
-		// }
-		for _, additionalCh := range vampBot.AdditionalChs {
-			if additionalCh.ChId == 0 {
-				continue
-			}
-			var botWithOtherCh entity.Bot
-			mycopy.DeepCopy(vampBot, &botWithOtherCh)
-			botWithOtherCh.ChId = additionalCh.ChId
-			botWithOtherCh.ChLink = additionalCh.ChLink
-			augmentedAllVampBots = append(augmentedAllVampBots, botWithOtherCh)
-		}
-	}
+	augmentedAllVampBots := srv.GetAugmentedVampBots(allVampBots)
 
 	for i, vampBot := range augmentedAllVampBots {
 		botRefka := vampBot.GroupLinkId
@@ -949,26 +930,7 @@ func (s *TgService) sendChPostAsVamp_Media_Group(mediaGroupId string) error {
 	}()
 
 	// если бот имеет доп каналы, то добавляем их в массив
-	augmentedAllVampBots := make([]entity.Bot, 0)
-	for _, vampBot := range allVampBots {
-		augmentedAllVampBots = append(augmentedAllVampBots, vampBot)
-
-		// var additionalChs []entity.AdditionalCh
-		// err = json.Unmarshal(vampBot.AdditionalChs, &additionalChs)
-		// if err != nil {
-		// 	return fmt.Errorf("Donor_addChannelPost json.Unmarshal err: %v", err)
-		// }
-		for _, additionalCh := range vampBot.AdditionalChs {
-			if additionalCh.ChId == 0 {
-				continue
-			}
-			var botWithOtherCh entity.Bot
-			mycopy.DeepCopy(vampBot, &botWithOtherCh)
-			botWithOtherCh.ChId = additionalCh.ChId
-			botWithOtherCh.ChLink = additionalCh.ChLink
-			augmentedAllVampBots = append(augmentedAllVampBots, botWithOtherCh)
-		}
-	}
+	augmentedAllVampBots := s.GetAugmentedVampBots(allVampBots)
 
 	var okSend int
 	var notOkSend int
