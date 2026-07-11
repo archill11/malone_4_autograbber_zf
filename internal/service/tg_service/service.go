@@ -30,6 +30,7 @@ type (
 		BotPrefix       string
 		DefaultLichka   string
 		IsPersonalLinks int
+		IsLinkedLichka  int
 		ChForStat       int
 		ChForStatErrors int
 		BotTokenForStat string

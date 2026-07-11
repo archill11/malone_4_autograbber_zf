@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS bots (
     ch_link           TEXT      DEFAULT '',
     group_link_id     INT       DEFAULT 0,
     lichka            TEXT      DEFAULT '',
+    linked_lichka     TEXT      DEFAULT '',
     user_creator      BIGINT    DEFAULT 0,
     is_disable        INT       DEFAULT 0,
     created_at        TIMESTAMP DEFAULT now(),
@@ -34,3 +35,5 @@ ALTER TABLE bots
 ALTER TABLE bots
   ADD COLUMN IF NOT EXISTS additional_chs JSONB DEFAULT '[]';
 
+ALTER TABLE bots
+  ADD COLUMN IF NOT EXISTS linked_lichka TEXT DEFAULT '';

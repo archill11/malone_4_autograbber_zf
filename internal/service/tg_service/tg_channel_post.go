@@ -20,6 +20,11 @@ import (
 	"go.uber.org/zap"
 )
 
+var skipPosts = []string{
+	"Донор псевдоним",
+	"ок, начинаю рассылку",
+}
+
 func (srv *TgService) Donor_HandleChannelPost(m models.Update) error {
 	fromId := m.ChannelPost.Chat.Id
 	srv.l.Info("Donor_HandleChannelPost", zap.Any("models.Update", m))
@@ -35,8 +40,10 @@ func (srv *TgService) Donor_HandleChannelPost(m models.Update) error {
 		return nil
 	}
 
-	if strings.HasPrefix(m.ChannelPost.Text, "Донор псевдоним") || strings.HasPrefix(m.ChannelPost.Text, "ок, начинаю рассылку") {
-		return nil
+	for _, skipPost := range skipPosts {
+		if strings.HasPrefix(m.ChannelPost.Text, skipPost) {
+			return nil
+		}
 	}
 
 	err := srv.Donor_addChannelPost(m)

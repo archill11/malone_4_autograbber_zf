@@ -47,6 +47,7 @@ func Get() *Config {
 	c.Tg.BotPrefix                             = os.Getenv("BOT_PREFIX")
 	c.Tg.DefaultLichka                         = os.Getenv("DEFAULT_LICHKA")
 	c.Tg.IsPersonalLinks, _       = strconv.Atoi(os.Getenv("IS_PERSONAL_LINKS")) // персональные ссылки для каждого бота
+	c.Tg.IsLinkedLichka, _       = strconv.Atoi(os.Getenv("IS_LINKED_LICHKA")) // ссылки на личку для каждого бота
 	c.Tg.IsMultiGrabber, _        = strconv.Atoi(os.Getenv("IS_MULTI_GRABBER")) // возможность привязывать одного граббера к разным каналам донорам
 	c.Tg.IsReplaceShortLinkDomen, _ = strconv.Atoi(os.Getenv("IS_REPLACE_SHORT_LINK_DOMEN"))
 	c.Tg.IsUseProxy, _            = strconv.Atoi(os.Getenv("IS_USE_PROXY")) 

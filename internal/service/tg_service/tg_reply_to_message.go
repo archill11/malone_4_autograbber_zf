@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"myapp/internal/entity"
 	"myapp/internal/models"
+	my_regex "myapp/pkg/regex"
 	"strconv"
 	"strings"
 	"time"
@@ -263,6 +264,17 @@ func (srv *TgService) HandleReplyToMessage(m models.Update) error {
 		runesStr := string(runes[len([]rune("укажите персональную ссылку для нового бота[")):])
 		botId, _ := strconv.Atoi(runesStr)
 		err := srv.RM_update_bot_personal_link(m, botId)
+		if err != nil {
+			srv.SendMessage(fromId, ERR_MSG)
+			srv.SendMessage(fromId, err.Error())
+		}
+		return err
+	}
+
+	if strings.HasPrefix(rm.Text, "укажите ссылку на личку для нового бота[") {
+		botIdStr := my_regex.GetStringInBetween(rm.Text, "укажите ссылку на личку для нового бота[", "")
+		botId, _ := strconv.Atoi(botIdStr)
+		err := srv.RM_update_bot_linked_lichka(m, botId)
 		if err != nil {
 			srv.SendMessage(fromId, ERR_MSG)
 			srv.SendMessage(fromId, err.Error())
@@ -851,6 +863,9 @@ func (srv *TgService) RM_update_bot_group_link(m models.Update, botId int) error
 	if srv.Cfg.IsPersonalLinks == 1 {
 		srv.SendForceReply(fromId, fmt.Sprintf(PERS_LINK_FOR_BOT_MSG, botId))
 	}
+	if srv.Cfg.IsLinkedLichka == 1 {
+		srv.SendForceReply(fromId, fmt.Sprintf(LINKED_LICHKA_FOR_BOT_MSG, botId))
+	}
 	return nil
 }
 
@@ -868,6 +883,24 @@ func (srv *TgService) RM_update_bot_personal_link(m models.Update, botId int) er
 		return err
 	}
 	srv.SendMessage(fromId, fmt.Sprintf("персональная ссылка %s привязанна к боту %d", persLink, botId))
+
+	return nil
+}
+
+func (srv *TgService) RM_update_bot_linked_lichka(m models.Update, botId int) error {
+	replyMes := m.Message.Text
+	fromId := m.Message.From.Id
+	fromUsername := m.Message.From.UserName
+	srv.l.Info(fmt.Sprintf("RM_update_bot_linked_lichka: fromId: %d fromUsername: %s, replyMes: %s", fromId, fromUsername, replyMes))
+	replyMes = strings.TrimSpace(replyMes)
+
+	linkedLichka := replyMes
+
+	err := srv.db.EditBotLinkedLichka(linkedLichka, botId)
+	if err != nil {
+		return err
+	}
+	srv.SendMessage(fromId, fmt.Sprintf("ссылка на личку %s привязанна к боту %d", linkedLichka, botId))
 
 	return nil
 }

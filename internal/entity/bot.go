@@ -10,6 +10,7 @@ type Bot struct {
 	ChLink                   string `json:"ch_link"`
 	GroupLinkId              int    `json:"group_link_id"`
 	Lichka                   string `json:"lichka"`
+	LinkedLichka             string `json:"linked_lichka"`
 	UserCreator              int    `json:"user_creator"`
 	IsDisable                int    `json:"is_disable"`
 	ChIsSkam                 int    `json:"ch_is_skam"`

@@ -323,6 +323,15 @@ var (
 		"http://t.me/lichka",
 		"t.me/lichka",
 	}
+
+	fakeLinkedLichkaPrefixes = []string{
+		"https://t.me/fake-linked_lichka",
+		"https://t.me/fake-linked-lichka",
+		"https://t.me/fake_linked_lichka",
+		"http://t.me/fake-linked_lichka",
+		"http://t.me/fake-linked-lichka",
+		"http://t.me/fake_linked_lichka",
+	}
 	
 	fakeLinkPrefixes = []string{
 		"http://fake-link",
@@ -397,6 +406,13 @@ func (srv *TgService) PrepareEntities(
 			}
 
 			entities[i].Url = urlLichka
+			continue
+		}
+
+		if isLink(v.Url, fakeLinkedLichkaPrefixes) {
+			if vampBot.LinkedLichka != "" {
+				entities[i].Url = vampBot.LinkedLichka
+			}
 			continue
 		}
 
