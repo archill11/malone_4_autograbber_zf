@@ -272,7 +272,7 @@ func (srv *TgService) HandleReplyToMessage(m models.Update) error {
 	}
 
 	if strings.HasPrefix(rm.Text, "укажите ссылку на личку для нового бота[") {
-		botIdStr := my_regex.GetStringInBetween(rm.Text, "укажите ссылку на личку для нового бота[", "")
+		botIdStr := my_regex.GetStringInBetween(rm.Text, "укажите ссылку на личку для нового бота[", "]")
 		botId, _ := strconv.Atoi(botIdStr)
 		err := srv.RM_update_bot_linked_lichka(m, botId)
 		if err != nil {
