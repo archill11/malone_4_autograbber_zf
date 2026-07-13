@@ -512,7 +512,7 @@ func (srv *TgService) PrepareEntities(
 		messText = strings.Replace(messText, "@lichka", txtMeText, -1)
 		txtMeIdx := strings.Index(messText, txtMeText)
 		txtMeOffset := len(messText) - txtMeIdx
-		txtMeLength := len(txtMeText)
+		txtMeLength := len([]rune(txtMeText))
 
 		entities = append(entities, models.MessageEntity{
 			Type: "url",
