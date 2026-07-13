@@ -520,6 +520,16 @@ func (srv *TgService) PrepareEntities(
 			Offset: txtMeOffset,
 			Length: txtMeLength,
 		})
+
+		srv.l.Debug(
+			"PrepareEntities Replace 2 @lichka",
+			zap.Any("txtMeText", txtMeText),
+			zap.Any("txtMeIdx", txtMeIdx),
+			zap.Any("txtMeOffset", txtMeOffset),
+			zap.Any("txtMeLength", txtMeLength),
+			zap.Any("messText", messText),
+			zap.Any("entities", entities),
+		)
 	}
 	srv.l.Debug(
 		"PrepareEntities Replace 2 @lichka",
