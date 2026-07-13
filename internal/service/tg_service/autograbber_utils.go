@@ -510,8 +510,18 @@ func (srv *TgService) PrepareEntities(
 	if srv.DelAt(vampBot.Lichka) == "" && vampBot.LinkedLichka != "" {
 		txtMeText := "Написать мне"
 		messText = strings.Replace(messText, "@lichka", txtMeText, -1)
-		txtMeIdx := strings.Index(messText, txtMeText)
-		txtMeOffset := len(messText) - txtMeIdx
+
+		// txtMeIdx := strings.Index([]rune(messText), []rune(txtMeText))
+		// txtMeIdx := strings.Index(string([]rune(messText)), string([]rune(txtMeText)))
+
+		var txtMeIdx int
+		for i := 0; i < len([]rune(messText)); i++ {
+			if string([]rune(messText)[i:i+len([]rune(txtMeText))]) == txtMeText {
+				txtMeIdx = i
+				break
+			}
+		}
+		txtMeOffset := len([]rune(messText)) - txtMeIdx
 		txtMeLength := len([]rune(txtMeText))
 
 		entities = append(entities, models.MessageEntity{
