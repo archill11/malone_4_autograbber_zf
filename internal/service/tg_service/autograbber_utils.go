@@ -516,7 +516,7 @@ func (srv *TgService) PrepareEntities(
 
 		entities = append(entities, models.MessageEntity{
 			Type: "url",
-			Url:  txtMeText,
+			Url:  vampBot.LinkedLichka,
 			Offset: txtMeOffset,
 			Length: txtMeLength,
 		})
