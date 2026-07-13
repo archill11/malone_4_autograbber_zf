@@ -511,36 +511,60 @@ func (srv *TgService) PrepareEntities(
 		txtMeText := "Написать мне"
 		messText = strings.Replace(messText, "@lichka", txtMeText, -1)
 
-		// txtMeIdx := strings.Index([]rune(messText), []rune(txtMeText))
-		// txtMeIdx := strings.Index(string([]rune(messText)), string([]rune(txtMeText)))
+		txtMeByteIdx := strings.Index(messText, txtMeText)
+		if txtMeByteIdx < 0 {
+			srv.l.Warn(
+				"PrepareEntities: failed to locate txtMeText after replacement",
+				zap.Any("txtMeText", txtMeText),
+				zap.Any("messText", messText),
+			)
+		} else {
+			runeToByte := byteOffsetsByRuneIndex(messText)
+			txtMeRuneIdx, okStart := runeIndexByByteOffset(runeToByte, txtMeByteIdx)
+			txtMeEndRuneIdx, okEnd := runeIndexByByteOffset(runeToByte, txtMeByteIdx+len(txtMeText))
+			if !okStart || !okEnd || txtMeEndRuneIdx <= txtMeRuneIdx {
+				srv.l.Warn(
+					"PrepareEntities: failed to map txtMeText byte span to runes",
+					zap.Any("txtMeText", txtMeText),
+					zap.Any("txtMeByteIdx", txtMeByteIdx),
+					zap.Any("messText", messText),
+				)
+			} else {
+				utf16Units := utf16UnitsByRuneIndex(messText)
+				txtMeOffset := utf16Units[txtMeRuneIdx]
+				txtMeLength := utf16Units[txtMeEndRuneIdx] - utf16Units[txtMeRuneIdx]
 
-		var txtMeIdx int
-		for i := 0; i < len([]rune(messText)); i++ {
-			if string([]rune(messText)[i:i+len([]rune(txtMeText))]) == txtMeText {
-				txtMeIdx = i
-				break
+				// Remove stale entities (e.g. old mention "@lichka") that overlap this span.
+				filteredEntities := make([]models.MessageEntity, 0, len(entities))
+				txtMeEndOffset := txtMeOffset + txtMeLength
+				for _, entity := range entities {
+					entityEnd := entity.Offset + entity.Length
+					overlaps := entity.Offset < txtMeEndOffset && entityEnd > txtMeOffset
+					if overlaps {
+						continue
+					}
+					filteredEntities = append(filteredEntities, entity)
+				}
+				entities = filteredEntities
+
+				entities = append(entities, models.MessageEntity{
+					Type:   "text_link",
+					Url:    vampBot.LinkedLichka,
+					Offset: txtMeOffset,
+					Length: txtMeLength,
+				})
+
+				srv.l.Debug(
+					"PrepareEntities Replace @lichka to LinkedLichka",
+					zap.Any("txtMeText", txtMeText),
+					zap.Any("txtMeRuneIdx", txtMeRuneIdx),
+					zap.Any("txtMeOffset", txtMeOffset),
+					zap.Any("txtMeLength", txtMeLength),
+					zap.Any("messText", messText),
+					zap.Any("entities", entities),
+				)
 			}
 		}
-		txtMeOffset := len([]rune(messText)) - txtMeIdx
-		txtMeLength := len([]rune(txtMeText))
-
-		entities = append(entities, models.MessageEntity{
-			Type: "text_link",
-			Url:  vampBot.LinkedLichka,
-			Offset: txtMeOffset,
-			Length: txtMeLength,
-		})
-
-		srv.l.Debug(
-			"PrepareEntities Replace @lichka to LinkedLichka",
-			zap.Any("txtMeText", txtMeText),
-			zap.Any("txtMeIdx", txtMeIdx),
-			zap.Any("len(messText)", len([]rune(messText))),
-			zap.Any("txtMeOffset", txtMeOffset),
-			zap.Any("txtMeLength", txtMeLength),
-			zap.Any("messText", messText),
-			zap.Any("entities", entities),
-		)
 	}
 	srv.l.Debug(
 		"PrepareEntities Replace 2 @lichka",
@@ -550,6 +574,7 @@ func (srv *TgService) PrepareEntities(
 		zap.Any("entities", entities),
 	)
 	if !cutEntities {
+		entities = srv.sanitizeEntitiesForText(entities, messText)
 		return entities, messText, nil
 	}
 	return nil, messText, nil
