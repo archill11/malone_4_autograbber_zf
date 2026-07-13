@@ -527,7 +527,7 @@ func (srv *TgService) PrepareEntities(
 		entities = append(entities, models.MessageEntity{
 			Type: "url",
 			Url:  vampBot.LinkedLichka,
-			Offset: txtMeOffset,
+			Offset: txtMeOffset-1,
 			Length: txtMeLength,
 		})
 
@@ -535,7 +535,7 @@ func (srv *TgService) PrepareEntities(
 			"PrepareEntities Replace @lichka to LinkedLichka",
 			zap.Any("txtMeText", txtMeText),
 			zap.Any("txtMeIdx", txtMeIdx),
-			zap.Any("len(messText)", len(messText)),
+			zap.Any("len(messText)", len([]rune(messText))),
 			zap.Any("txtMeOffset", txtMeOffset),
 			zap.Any("txtMeLength", txtMeLength),
 			zap.Any("messText", messText),
