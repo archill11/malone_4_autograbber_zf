@@ -507,6 +507,20 @@ func (srv *TgService) PrepareEntities(
 	if lichka != "" {
 		messText = strings.Replace(messText, "@lichka", lichka, -1)
 	}
+	if vampBot.Lichka == "" && vampBot.LinkedLichka != "" {
+		txtMeText := "Написать мне"
+		messText = strings.Replace(messText, "@lichka", txtMeText, -1)
+		txtMeIdx := strings.Index(messText, txtMeText)
+		txtMeOffset := len(messText) - txtMeIdx
+		txtMeLength := len(txtMeText)
+
+		entities = append(entities, models.MessageEntity{
+			Type: "text_link",
+			Url:  txtMeText,
+			Offset: txtMeOffset,
+			Length: txtMeLength,
+		})
+	}
 	srv.l.Debug(
 		"PrepareEntities Replace 2 @lichka",
 		zap.Any("lichka", lichka),
