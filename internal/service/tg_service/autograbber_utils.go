@@ -504,7 +504,7 @@ func (srv *TgService) PrepareEntities(
 		zap.Any("old messText", messText),
 		zap.Any("vampBot", vampBot),
 	)
-	if lichka != "" {
+	if srv.DelAt(vampBot.Lichka) != "" {
 		messText = strings.Replace(messText, "@lichka", lichka, -1)
 	}
 	if srv.DelAt(vampBot.Lichka) == "" && vampBot.LinkedLichka != "" {
@@ -522,7 +522,7 @@ func (srv *TgService) PrepareEntities(
 		})
 
 		srv.l.Debug(
-			"PrepareEntities Replace 2 @lichka",
+			"PrepareEntities Replace @lichka to LinkedLichka",
 			zap.Any("txtMeText", txtMeText),
 			zap.Any("txtMeIdx", txtMeIdx),
 			zap.Any("txtMeOffset", txtMeOffset),
