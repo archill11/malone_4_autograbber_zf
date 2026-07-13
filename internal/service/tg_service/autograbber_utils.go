@@ -525,7 +525,7 @@ func (srv *TgService) PrepareEntities(
 		txtMeLength := len([]rune(txtMeText))
 
 		entities = append(entities, models.MessageEntity{
-			Type: "url",
+			Type: "text_link",
 			Url:  vampBot.LinkedLichka,
 			Offset: txtMeOffset-1,
 			Length: txtMeLength,
